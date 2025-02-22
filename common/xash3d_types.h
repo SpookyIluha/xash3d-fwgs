@@ -183,7 +183,7 @@ typedef int qboolean;
 #define LittleLongSW(x) (x = LittleLong(x) )
 #define LittleShort(x) ((short)( (((short)(x) >> 8) & 255) + (((short)(x) & 255) << 8)))
 #define LittleShortSW(x) (x = LittleShort(x) )
-_inline float LittleFloat( float f )
+inline float LittleFloat( float f )
 {
 	union
 	{
@@ -208,7 +208,7 @@ _inline float LittleFloat( float f )
 #endif
 
 
-typedef unsigned int dword;
+typedef uint32_t 	 dword;
 typedef unsigned int uint;
 typedef char         string[MAX_STRING];
 typedef off_t        fs_offset_t;

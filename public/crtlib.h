@@ -17,6 +17,7 @@ GNU General Public License for more details.
 #ifndef STDLIB_H
 #define STDLIB_H
 
+#include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
@@ -194,7 +195,7 @@ static inline size_t Q_strnlen( const char *str, size_t size )
 	return strnlen( str, size );
 #else
 	const char *p = (const char *)memchr( str, 0, size );
-	return p ? p - str : size;
+	return p ? (size_t)(p - str) : size;
 #endif
 }
 
@@ -245,6 +246,39 @@ static inline size_t Q_strncat( char *dst, const char *src, size_t size )
 		return dlen + slen;
 	}
 #endif
+}
+
+static inline int stricmp(const char *string1, const char *string2) {
+    char* tmp1 = malloc(sizeof(string1));
+    char* tmp2 = malloc(sizeof(string2));
+
+    strcpy(tmp1, string1);
+    strcpy(tmp2, string2);
+
+    for (int i = 0; i < strlen(tmp1); i++)
+        tmp1[i] = tolower(tmp1[i]);
+
+    for (int i = 0; i < strlen(tmp2); i++)
+        tmp2[i] = tolower(tmp2[i]);
+
+    int res = strcmp(tmp1, tmp2);
+
+    free(tmp1);
+    free(tmp2);
+
+    return res;
+}
+
+static inline int strnicmp(const char *s1, const char *s2, size_t len)
+{
+    int diff = 0;
+    while (!diff && len-- && *s1 && *s2) {
+        if (*s1 != *s2)
+            diff = (int)tolower(*s1) - (int)tolower(*s2);
+        s1++;
+        s2++;
+    }
+    return diff;
 }
 
 #if HAVE_STRICMP || HAVE_STRCASECMP

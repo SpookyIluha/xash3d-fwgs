@@ -903,7 +903,7 @@ qboolean COM_IsSafeFileToDownload( const char *filename )
 	const char	*first, *last;
 	const char	*ext;
 	size_t	len;
-	int		i;
+	uint		i;
 
 	if( !COM_CheckString( filename ))
 		return false;

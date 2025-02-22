@@ -22,6 +22,8 @@ GNU General Public License for more details.
 #include "platform/platform.h"
 #include "menu_int.h"
 
+#include <libdragon.h>
+
 static qboolean Sys_FindExecutable( const char *baseName, char *buf, size_t size )
 {
 	char *envPath;
@@ -169,6 +171,8 @@ double Platform_DoubleTime( void )
 	struct timespec ts;
 #if XASH_IRIX
 	clock_gettime( CLOCK_SGI_CYCLE, &ts );
+#elif XASH_N64
+	return TICKS_TO_MS((double)timer_ticks()) / 1000.0f;
 #else
 	clock_gettime( CLOCK_MONOTONIC, &ts );
 #endif

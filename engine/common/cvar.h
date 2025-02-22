@@ -17,6 +17,7 @@ GNU General Public License for more details.
 #define CVAR_H
 
 #include "cvardef.h"
+#include "filesystem.h"
 
 // As some mods dynamically allocate cvars and free them without notifying the engine
 // let's construct a list of cvars that must be removed

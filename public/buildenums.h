@@ -43,8 +43,11 @@ GNU General Public License for more details.
 #define PLATFORM_PSVITA     14
 #define PLATFORM_WASI       15
 #define PLATFORM_SUNOS      16
+#define PLATFORM_N64	    64
 
-#if XASH_WIN32
+#if XASH_N64
+	#define XASH_PLATFORM PLATFORM_N64
+#elif XASH_WIN32
 	#define XASH_PLATFORM PLATFORM_WIN32
 #elif XASH_ANDROID
 	#define XASH_PLATFORM PLATFORM_ANDROID

@@ -101,7 +101,7 @@ Then you can use another oneliner to query all variables:
 #elif defined __WATCOMC__ && defined __DOS__
 	#define XASH_DOS4GW 1
 #else // POSIX compatible
-	#define XASH_POSIX 1
+	//#define XASH_POSIX 1
 	#if defined __linux__
 		#if defined __ANDROID__
 			#define XASH_ANDROID 1
@@ -133,6 +133,8 @@ Then you can use another oneliner to query all variables:
 		#define XASH_WASI 1
 	#elif defined __sun__
 		#define XASH_SUNOS 1
+	#elif defined __vr4300__
+		#define XASH_N64 1
 	#else
 		#error
 	#endif
@@ -154,11 +156,11 @@ Then you can use another oneliner to query all variables:
 //================================================================
 
 #if !defined XASH_ENDIANNESS
-	#if defined XASH_WIN32 || __LITTLE_ENDIAN__
+	#if __BIG_ENDIAN__
+		#define XASH_BIG_ENDIAN 1
+	#elif	defined XASH_WIN32 || __LITTLE_ENDIAN__
 		//!!! Probably all WinNT installations runs in little endian
 		#define XASH_LITTLE_ENDIAN 1
-	#elif __BIG_ENDIAN__
-		#define XASH_BIG_ENDIAN 1
 	#elif defined __BYTE_ORDER__ && defined __ORDER_BIG_ENDIAN__ && defined __ORDER_LITTLE_ENDIAN__ // some compilers define this
 		#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 			#define XASH_BIG_ENDIAN 1

@@ -67,6 +67,27 @@ SETUP BACKENDS DEFINITIONS
 		#endif // XASH_SOUND
 
 		#define XASH_USE_EVDEV 1
+	#elif XASH_N64
+		#ifndef XASH_VIDEO
+			#define XASH_VIDEO VIDEO_DOS
+		#endif // XASH_VIDEO
+	
+		#ifndef XASH_INPUT
+			#define XASH_INPUT INPUT_N64
+		#endif // XASH_INPUT
+	
+		#ifndef XASH_SOUND
+			#define XASH_SOUND SOUND_N64
+		#endif // XASH_SOUND
+	
+		#ifndef XASH_TIMER
+			#define XASH_TIMER TIMER_N64
+		#endif // XASH_TIMER
+
+		//#ifndef XASH_LIB
+		//	#define XASH_LIB LIB_POSIX
+		//#endif // XASH_LIB
+		
 	#elif XASH_DOS4GW
 		#ifndef XASH_VIDEO
 			#define XASH_VIDEO VIDEO_DOS

@@ -336,7 +336,7 @@ static char *COM_GetItaniumName( const char * const in_name )
 	{
 		// parse symbol length marker
 		len = 0;
-		for( ; isdigit( *f ) && remaining > 0; f++, remaining-- )
+		for( ; isdigit( (int) *f ) && remaining > 0; f++, remaining-- )
 			len = len * 10 + ( *f - '0' );
 
 		// sane value
@@ -353,7 +353,7 @@ static char *COM_GetItaniumName( const char * const in_name )
 		if( *f == 'E' )
 			break;
 
-		if( !isdigit( *f ) || remaining <= 0 )
+		if( !isdigit( (int) *f ) || remaining <= 0 )
 			goto invalid_format;
 	}
 

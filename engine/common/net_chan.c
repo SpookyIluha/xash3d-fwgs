@@ -19,7 +19,7 @@ GNU General Public License for more details.
 #include "net_encode.h"
 #include "protocol.h"
 #if !XASH_DEDICATED
-#include <bzlib.h>
+//#include <bzlib.h>
 #endif // !XASH_DEDICATED
 
 #define MAKE_FRAGID( id, count )	((( id & 0xffff ) << 16 ) | ( count & 0xffff ))

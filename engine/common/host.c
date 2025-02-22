@@ -373,6 +373,8 @@ static int Host_CalcSleep( void )
 		// fallthrough
 	case HOST_SLEEP:
 		return 20;
+	default:
+		break;
 	}
 
 	return host_sleeptime.value;
@@ -510,10 +512,10 @@ static void Host_Exec_f( void )
 	// FS_LoadFile always null terminates
 	if( f[len - 1] != '\n' )
 	{
-		Cbuf_InsertTextLen( f, len, len + 1 );
+		Cbuf_InsertTextLen( (const char*) f, len, len + 1 );
 		Cbuf_InsertTextLen( "\n", 1, 1 );
 	}
-	else Cbuf_InsertTextLen( f, len, len );
+	else Cbuf_InsertTextLen( (const char*) f, len, len );
 
 	Mem_Free( f );
 }
@@ -985,7 +987,7 @@ static uint32_t Host_CheckBugcomp( void )
 	if( !Sys_CheckParm( "-bugcomp" ))
 		return 0;
 
-	if( Sys_GetParmFromCmdLine( "-bugcomp", args ) && isalpha( args[0] ))
+	if( Sys_GetParmFromCmdLine( "-bugcomp", args ) && isalpha( (unsigned char)args[0] ))
 	{
 		Q_splitstr( args, '+', &flags, Host_CheckBugcomp_splitstr_handler );
 	}

@@ -48,6 +48,10 @@ GNU General Public License for more details.
 #include <vitasdk.h>
 #endif
 
+#if XASH_N64
+#include <libdragon.h>
+#endif
+
 #include "menu_int.h" // _UPDATE_PAGE macro
 
 #include "library.h"
@@ -590,6 +594,8 @@ qboolean Sys_NewInstance( const char *gamedir, const char *finalmsg )
 	exe = strdup( "app0:/eboot.bin" );
 	Host_ShutdownWithReason( finalmsg );
 	sceAppMgrLoadExec( exe, newargs, NULL );
+#elif XASH_N64
+	assertf(0, "attempted restart");
 #else
 	exelen = wai_getExecutablePath( NULL, 0, NULL );
 	exe = malloc( exelen + 1 );

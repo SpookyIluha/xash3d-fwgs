@@ -147,7 +147,7 @@ Adds command text immediately after the current command
 */
 static void Cbuf_InsertTextToBuffer( cmdbuf_t *buf, const char *text, size_t len, size_t requested_len )
 {
-	if(( buf->cursize + requested_len ) >= buf->maxsize )
+	if((int)( buf->cursize + requested_len ) >= buf->maxsize )
 	{
 		Con_Reportf( S_WARN "%s: overflow\n", __func__ );
 	}
@@ -555,7 +555,7 @@ Cmd_Argv
 */
 const char *GAME_EXPORT Cmd_Argv( int arg )
 {
-	if((uint)arg >= cmd_argc )
+	if((int)arg >= cmd_argc )
 		return "";
 	return cmd_argv[arg];
 }
@@ -902,7 +902,7 @@ static void Cmd_Else_f( void )
 static qboolean Cmd_ShouldAllowCommand( cmd_t *cmd, qboolean isPrivileged )
 {
 	const char *prefixes[] = { "cl_", "gl_", "r_", "m_", "hud_", "joy_", "con_", "scr_" };
-	int i;
+	uint i;
 
 	// always allow local commands
 	if( isPrivileged )

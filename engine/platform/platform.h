@@ -17,11 +17,16 @@ GNU General Public License for more details.
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
+#ifdef XASH_N64
+	#include <libdragon.h>
+#endif
+
 #include "common.h"
 #include "system.h"
 #include "defaults.h"
 #include "cursor_type.h"
 #include "key_modifiers.h"
+
 
 /*
 ==============================================================================
@@ -80,6 +85,19 @@ void Wcon_ShowConsole( qboolean show );
 void Wcon_DisableInput( void );
 char *Wcon_Input( void );
 void Wcon_WinPrint( const char *pMsg );
+#endif
+
+#ifdef XASH_N64
+void N64_Init( qboolean con_showalways );
+void N64_Shutdown( void );
+qboolean N64_NanoSleep( int nsec );
+void N64_CreateConsole( qboolean con_showalways );
+void N64_DestroyConsole( void );
+void N64_InitConsoleCommands( void );
+void N64_ShowConsole( qboolean show );
+void N64_DisableInput( void );
+char *N64_Input( void );
+void N64_WinPrint( const char *pMsg );
 #endif
 
 #if XASH_NSWITCH
@@ -170,13 +188,17 @@ static inline void Platform_SetupSigtermHandling( void )
 
 static inline void Platform_Sleep( int msec )
 {
+
 #if XASH_TIMER == TIMER_SDL
 	SDL_Delay( msec );
 #elif XASH_TIMER == TIMER_POSIX
-	usleep( msec * 1000 );
+	wait_ticks(TICKS_FROM_MS(msec));
 #elif XASH_TIMER == TIMER_WIN32
 	Sleep( msec );
+#elif XASH_TIMER == TIMER_N64
+	wait_ticks(TICKS_FROM_MS(msec));
 #else
+	
 	// stub
 #endif
 }
@@ -193,6 +215,9 @@ static inline qboolean Platform_NanoSleep( int nsec )
 	return nanosleep( &ts, NULL ) == 0;
 #elif XASH_WIN32
 	return Win32_NanoSleep( nsec );
+#elif TIMER_N64
+	wait_ticks(TICKS_FROM_US((float)nsec / 1000.0));
+	return true;
 #else
 	return false;
 #endif
@@ -444,6 +469,9 @@ qboolean VoiceCapture_Lock( qboolean lock );
 			struct timespec ns_t2 = {0, 0}; \
 			nanosleep( &ns_t1, &ns_t2 ); \
 		} while( 0 )
+#elif XASH_N64
+	#define INLINE_RAISE(x) assertf(0, "%s", x)
+	#define INLINE_NANOSLEEP1() wait_ticks(TICKS_FROM_US(0.001))	
 #else // generic
 	#define INLINE_RAISE(x) raise(x)
 	#define INLINE_NANOSLEEP1() sleep(1)

@@ -191,6 +191,9 @@ static qboolean FS_DetermineRootDirectory( char *out, size_t size )
 #if TARGET_OS_IOS
 	Q_strncpy( out, IOS_GetDocsDir(), size );
 	return true;
+#elif XASH_N64
+	strncpy(out, "rom:/", size);
+	return true;
 #elif XASH_ANDROID && XASH_SDL
 	path = SDL_AndroidGetExternalStoragePath();
 	if( path != NULL )

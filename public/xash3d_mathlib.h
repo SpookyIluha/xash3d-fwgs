@@ -42,12 +42,12 @@ CONSTANTS AND HELPER MACROS
 #define M_PI    (double)3.14159265358979323846
 #endif
 
-#define M_PI2   ((double)(M_PI * 2))
+#define M_PI2   ((float)(M_PI * 2))
 #define M_PI_F  ((float)(M_PI))
 #define M_PI2_F ((float)(M_PI2))
 
-#define RAD2DEG( x ) ((double)(x) * (double)(180.0 / M_PI))
-#define DEG2RAD( x ) ((double)(x) * (double)(M_PI / 180.0))
+#define RAD2DEG( x ) ((float)(x) * (float)(180.0 / M_PI))
+#define DEG2RAD( x ) ((float)(x) * (float)(M_PI / 180.0))
 
 #define NUMVERTEXNORMALS 162
 

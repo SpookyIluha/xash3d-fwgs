@@ -1,0 +1,169 @@
+libdragon exec ./waf configure --64bits --dedicated --low-memory-mode 2 --enable-static-binary --static-linking STATIC_LINKING
+
+
+usage: waf [commands] [options]
+
+Main commands (example: ./waf build -j4)
+  build    : executes the build
+  clean    : cleans the project
+  configure: configures the project
+  dist     : makes a tarball for redistributing the sources
+  distcheck: checks if the project compiles (tarball from 'dist')
+  distclean: removes build folders and data
+  install  : installs the targets on the system
+  list     : lists the targets to execute
+  step     : executes tasks in a step-by-step fashion, for debugging
+  uninstall: removes the targets installed
+
+options:
+  -c {yes,no,auto}, --color {yes,no,auto}
+                        whether to use colors (yes/no/auto) [default: auto]
+  -j JOBS, --jobs JOBS  amount of parallel jobs (12)
+  -k, --keep            continue despite errors (-kk to try harder)
+  -v, --verbose         verbosity level -v -vv or -vvv [default: 0]
+  --zones ZONES         debugging zones (task_gen, deps, tasks, etc)
+  -h, --help            show this help message and exit
+  --version             show the Waf version and exit
+  --rebuild-cache       load previous configuration
+  --reconfigure         load and update configuration
+  --static-linking STATIC_LINKING
+  --notests             Exec no unit tests
+  --alltests            Exec all unit tests
+  --clear-failed        Force failed unit tests to run again next time
+  --testcmd TESTCMD     Run the unit tests using the test-cmd string example "--testcmd="valgrind --error-exitcode=1 {'option_strings': ['--testcmd'], 'dest': 'testcmd', 'nargs': None, 'const':  
+                        None, 'default': False, 'type': None, 'choices': None, 'required': False, 'help': 'Run the unit tests using the test-cmd string example "--testcmd="valgrind --error-      
+                        exitcode=1 %s" to run under valgrind', 'metavar': None, 'container': <argparse._ArgumentGroup object at 0x7f7c9ae0a500>, 'prog': 'waf'}" to run under valgrind
+  --dump-test-scripts   Create python scripts to help debug tests
+  --msdev               select msdev for export/import actions
+  --msdev-clean         delete exported msdev files
+  --execsolution EXECSOLUTION
+                        when building with visual studio, use a build state file
+  --cmake               select cmake for export/import actions
+  --cmake-clean         delete exported cmake files
+  --validate-target VALIDATE_TARGET
+                        development option, needs --enable-tests flag
+
+Configuration options:
+  -o OUT, --out OUT     build dir for the project
+  -t TOP, --top TOP     src dir for the project
+  --prefix PREFIX       installation prefix [default: '/']
+  --bindir BINDIR       bindir
+  --libdir LIBDIR       libdir
+  --check-cxx-compiler CHECK_CXX_COMPILER
+                        list of C++ compilers to try [g++ clang++ icpc]
+  --check-c-compiler CHECK_C_COMPILER
+                        list of C compilers to try [gcc clang icc]
+
+Build and installation options:
+  -p, --progress        -p: progress bar; -pp: ide output
+  --targets TARGETS     task generators, e.g. "target1,target2"
+
+Step options:
+  --files FILES         files to process, by regexp, e.g. "*/main.c,*/test/main.o"
+
+Installation and uninstallation options:
+  --destdir DESTDIR     installation root [default: '']
+  -f, --force           force file installation
+  --distcheck-args ARGS
+                        arguments to pass to distcheck
+  --strip               strip binaries. You must pass this flag to install command [default: False]
+  --strip-to-file       strip debug information to file *.debug. Implies --strip. You must pass this flag to install command [default: False]
+
+Compiler optimization options:
+  -T BUILD_TYPE, --build-type BUILD_TYPE
+                        build type: debug, release or none(custom flags)
+  --enable-lto          enable Link Time Optimization if possible [default: False]
+  --enable-poly-opt     enable polyhedral optimization if possible [default: False]
+  --enable-openmp       enable OpenMP extensions [default: False]
+  --enable-profile      enable profile generating build (stored in xash3d-prof directory) [default: False]
+  --use-profile PROFILE_USE
+                        use profile during build [default: None]
+
+Cross compile options:
+  --android ANDROID_OPTS
+                        enable building for android, format: --android=<arch>,<toolchain>,<api>, example: --android=armeabi-v7a-hard,4.9,9
+  --enable-magx         enable building for Motorola MAGX [default: False]
+  --enable-msvc-wine    enable building with MSVC using Wine [default: False]
+  --nswitch             enable building for Nintendo Switch [default: False]
+  --psvita              enable building for PlayStation Vita [default: False]
+  --sailfish SAILFISH   enable building for Sailfish/Aurora
+
+SDL2/SDL3 options:
+  -s SDL_PATH, --sdl2 SDL_PATH
+                        path to precompiled SDL library (required for Windows)
+  --use-sdl3            configure for SDL3 [default: False]
+  --skip-sdl2-sanity-check
+                        skip checking SDL sanity [default: True]
+  --sdl-use-pkgconfig   force use of pkg-config to find sdl [default: False]
+
+Subproject options:
+  -S SKIP_SUBDIRS, --skip-subprojects SKIP_SUBDIRS
+                        don't recurse into specified subprojects. Use only directory name.
+
+Common options:
+  -d, --dedicated       only build Xash Dedicated Server [default: False]
+  --enable-dedicated    enable building Xash Dedicated Server alongside client [default: False]
+  --gamedir GAMEDIR     engine default (base) game directory [default: valve]
+  -8, --64bits          allow targetting 64-bit engine(Linux/Windows only) [default: False]
+  -4, --32bits          force targetting 32-bit engine, usually unneeded [default: False]
+  -P, --enable-packaging
+                        respect prefix option, useful for packaging for various operating systems [default: False]
+  --enable-bundled-deps
+                        prefer to build bundled dependencies (like opus) instead of relying on system provided
+  --enable-hl25-extended-structs
+                        build engine and renderers with HL25 extended structs compatibility (might be required for some mods) [default: False]
+  --low-memory-mode LOW_MEMORY
+                        enable low memory mode (only for devices have <128 ram)
+  --disable-werror      disable compilation abort on warning
+  --enable-tests        enable building standalone tests (does not enable engine tests!) [default: False]
+  --debug-all-servers
+  --enable-msvcdeps
+
+Renderers options:
+  --enable-all-renderers
+                        enable all renderers supported by Xash3D FWGS [default: False]
+  --disable-soft        disable soft renderer [default: True]
+  --disable-gl          disable gl renderer [default: True]
+  --enable-gles1        enable gles1 renderer [default: False]
+  --enable-gles2        enable gles2 renderer [default: False]
+  --enable-gl4es        enable gl4es renderer [default: False]
+  --enable-gles3compat  enable gles3compat renderer [default: False]
+  --enable-null         enable null renderer [default: False]
+
+Utilities options:
+  --enable-utils        enable building various development utilities [default: False]
+  --enable-xar          enable building Xash ARchiver (experimental) [default: False]
+  --enable-fuzzer       enable building libFuzzer runner [default: False]
+  --disable-utils-mdldec
+                        disable studio model decompiler utility [default: False]
+
+ref_gl options:
+  --enable-static-gl    enable direct linking to opengl [default: False]
+
+MainUI C++ options:
+  --enable-stbtt        prefer stb_truetype.h over freetype [default: False]
+
+VGUI options:
+  --disable-vgui        disable vgui_support [default: False]
+  --vgui VGUI_DEV       path to vgui-dev repo [default: /libdragon/xash3d_n64/xash3d-fwgs/3rdparty/vgui_support/vgui-dev]
+  --enable-unsupported-vgui
+                        ignore all checks and allow link against anything [default: False]
+  --skip-vgui-sanity-check
+                        skip checking VGUI sanity [default: True]
+
+Game launcher options:
+  --disable-menu-changegame
+                        disable changing the game from the menu [default: False]
+
+Engine options:
+  --enable-fbdev        build fbdev-only software-only engine
+  --disable-async-resolve
+                        disable multithreaded operations(asynchronous name resolution)
+  --enable-custom-swap  enable custom swap allocator. For devices with no swap support
+  --enable-legacy-sdl   enable using SDL1.2 instead of SDL2(not recommended) [default: False]
+  --enable-static-binary
+                        build static binary(not recommended, --single-binary required) [default: False]
+  --enable-engine-tests
+                        embed tests into the engine, jump into them by -runtests command line switch [default: False]
+  --enable-engine-fuzz  add LLVM libFuzzer [default: False]
+  --enable-ffmpeg

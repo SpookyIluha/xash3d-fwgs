@@ -16,7 +16,7 @@ GNU General Public License for more details.
 #include "common.h"
 #include "const.h"
 #include "server.h"
-#include "net_encode.h"
+#include "protocol.h"
 #include "net_api.h"
 
 const char *const clc_strings[clc_lastmsg+1] =
@@ -1315,7 +1315,7 @@ void SV_FullUpdateMovevars( sv_client_t *cl, sizebuf_t *msg )
 {
 	const movevars_t nullmovevars = { 0 };
 
-	MSG_WriteDeltaMovevars( msg, &nullmovevars, &svgame.movevars );
+	//MSG_WriteDeltaMovevars( msg, &nullmovevars, &svgame.movevars );
 }
 
 /*
@@ -1598,7 +1598,7 @@ void SV_SendServerdata( sizebuf_t *msg, sv_client_t *cl )
 	}
 
 	// send delta-encoding
-	Delta_WriteDescriptionToClient( msg );
+	//Delta_WriteDescriptionToClient( msg );
 
 	// now client know delta and can reading encoded messages
 	SV_FullUpdateMovevars( cl, msg );
@@ -3257,7 +3257,7 @@ static void SV_ParseClientMove( sv_client_t *cl, sizebuf_t *msg )
 	for( i = totalcmds - 1; i >= 0; i-- )
 	{
 		to = &cmds[i];
-		MSG_ReadDeltaUsercmd( msg, from, to );
+		//MSG_ReadDeltaUsercmd( msg, from, to );
 		from = to; // get new baseline
 	}
 

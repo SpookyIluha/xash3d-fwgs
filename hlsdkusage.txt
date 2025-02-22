@@ -1,0 +1,100 @@
+usage: waf [commands] [options]
+
+Main commands (example: ./waf build -j4)
+  build    : executes the build
+  clean    : cleans the project
+  configure: configures the project
+  dist     : makes a tarball for redistributing the sources
+  distcheck: checks if the project compiles (tarball from 'dist')
+  distclean: removes build folders and data
+  install  : installs the targets on the system
+  list     : lists the targets to execute
+  step     : executes tasks in a step-by-step fashion, for debugging
+  uninstall: removes the targets installed
+
+options:
+  -c {yes,no,auto}, --color {yes,no,auto}
+                        whether to use colors (yes/no/auto) [default: auto]
+  -j JOBS, --jobs JOBS  amount of parallel jobs (12)
+  -k, --keep            continue despite errors (-kk to try harder)
+  -v, --verbose         verbosity level -v -vv or -vvv [default: 0]
+  --zones ZONES         debugging zones (task_gen, deps, tasks, etc)
+  -h, --help            show this help message and exit
+  --version             show the Waf version and exit
+  --rebuild-cache       load previous configuration
+  --reconfigure         load and update configuration
+  --msdev               select msdev for export/import actions
+  --msdev-clean         delete exported msdev files
+  --execsolution EXECSOLUTION
+                        when building with visual studio, use a build state file
+
+Configuration options:
+  -o OUT, --out OUT     build dir for the project
+  -t TOP, --top TOP     src dir for the project
+  --prefix PREFIX       installation prefix [default: '/']
+  --bindir BINDIR       bindir
+  --libdir LIBDIR       libdir
+  --check-cxx-compiler CHECK_CXX_COMPILER
+                        list of C++ compilers to try [g++ clang++ icpc]
+  --check-c-compiler CHECK_C_COMPILER
+                        list of C compilers to try [gcc clang icc]
+
+Build and installation options:
+  -p, --progress        -p: progress bar; -pp: ide output
+  --targets TARGETS     task generators, e.g. "target1,target2"
+
+Step options:
+  --files FILES         files to process, by regexp, e.g. "*/main.c,*/test/main.o"
+
+Installation and uninstallation options:
+  --destdir DESTDIR     installation root [default: '']
+  -f, --force           force file installation
+  --distcheck-args ARGS
+                        arguments to pass to distcheck
+  --strip               strip binaries. You must pass this flag to install command [default: False]
+  --strip-to-file       strip debug information to file *.debug. Implies --strip. You must pass this flag to install command [default: False]
+
+Compiler optimization options:
+  -T BUILD_TYPE, --build-type BUILD_TYPE
+                        build type: debug, release or none(custom flags)
+  --enable-lto          enable Link Time Optimization if possible [default: False]
+  --enable-poly-opt     enable polyhedral optimization if possible [default: False]
+  --enable-openmp       enable OpenMP extensions [default: False]
+  --enable-profile      enable profile generating build (stored in xash3d-prof directory) [default: False]
+  --use-profile PROFILE_USE
+                        use profile during build [default: None]
+
+Cross compile options:
+  --android ANDROID_OPTS
+                        enable building for android, format: --android=<arch>,<toolchain>,<api>, example: --android=armeabi-v7a-hard,4.9,9
+  --enable-magx         enable building for Motorola MAGX [default: False]
+  --enable-msvc-wine    enable building with MSVC using Wine [default: False]
+  --nswitch             enable building for Nintendo Switch [default: False]
+  --psvita              enable building for PlayStation Vita [default: False]
+  --sailfish SAILFISH   enable building for Sailfish/Aurora
+
+Subproject options:
+  -S SKIP_SUBDIRS, --skip-subprojects SKIP_SUBDIRS
+                        don't recurse into specified subprojects. Use only directory name.
+
+Common options:
+  -8, --64bits          allow targetting 64-bit libs (Linux/Windows/OSX x86 only) [default: False]
+  -4, --32bits          force targetting 32-bit libs, usually unneeded [default: False]
+  --disable-werror      disable compilation abort on warning
+  --enable-voicemgr     Enable VOICE MANAGER
+  --enable-msvcdeps
+
+Client options:
+  --enable-vgui         Enable VGUI1
+  --enable-novgui-motd  Prefer non-VGUI MOTD when USE_VGUI is enabled
+  --enable-novgui-scoreboard
+                        Prefer non-VGUI Scoreboard when USE_VGUI is enabled
+  --disable-goldsrc-support
+                        disable GoldSource compatibility on i386 Win/Mac/Linux
+
+VGUI options:
+  --vgui VGUI_DEV       path to vgui-dev repo [default: /libdragon/xash3d_n64/hlsdk-portable-master/cl_dll/vgui-dev]
+  --enable-unsupported-vgui
+                        ignore all checks and allow link against anything [default: False]
+  --skip-vgui-sanity-check
+                        skip checking VGUI sanity [default: True]

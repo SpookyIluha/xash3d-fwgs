@@ -195,8 +195,8 @@ void COM_Frame( double time )
 {
 	int	loopCount = 0;
 
-	if( setjmp( g_abortframe ))
-		return;
+	//if( setjmp( g_abortframe ))
+	//	return;
 
 	while( 1 )
 	{

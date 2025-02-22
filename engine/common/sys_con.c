@@ -23,6 +23,9 @@ GNU General Public License for more details.
 #include <sys/time.h>
 #endif
 #include "xash3d_mathlib.h"
+#if XASH_N64
+#include  <libdragon.h>
+#endif
 
 // do not waste precious CPU cycles on mobiles or low memory devices
 #if !XASH_WIN32 && !XASH_MOBILE_PLATFORM && !XASH_LOW_MEMORY
@@ -180,11 +183,15 @@ static qboolean Sys_WriteEscapeSequenceForColorcode( int fd, int c )
 
 static void Sys_PrintLogfile( const int fd, const char *logtime, size_t logtime_len, const char *msg, const int colorize )
 {
+	#ifdef XASH_N64
+		const char *p = msg;
+		debugf("%s\n", msg);
+	#else
 	const char *p = msg;
 
 	if( logtime_len != 0 )
 	{
-		if( write( fd, logtime, logtime_len ) < 0 )
+		if( fwrite( fd, logtime, logtime_len ) < 0 )
 		{
 			// not critical for us
 		}
@@ -226,6 +233,7 @@ static void Sys_PrintLogfile( const int fd, const char *logtime, size_t logtime_
 	// flush the color
 	if( colorize )
 		Sys_WriteEscapeSequenceForColorcode( fd, 7 );
+	#endif
 }
 
 static void Sys_PrintStdout( const char *logtime, size_t logtime_len, const char *msg )
@@ -258,7 +266,9 @@ static void Sys_PrintStdout( const char *logtime, size_t logtime_len, const char
 		fprintf( stderr, "%s %s", logtime, buf );
 	}
 #endif
-
+#elif XASH_N64
+	// just spew it to stderr normally in debug mode
+	debugf("%s %s", logtime, buf );
 #elif !XASH_WIN32 // Wcon does the job
 	Sys_PrintLogfile( STDOUT_FILENO, logtime, logtime_len, msg, XASH_COLORIZE_CONSOLE );
 	Sys_FlushStdout();

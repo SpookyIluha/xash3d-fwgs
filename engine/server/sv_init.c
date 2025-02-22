@@ -874,7 +874,7 @@ qboolean CRC32_MapFile( dword *crcvalue, const char *filename, qboolean multipla
 		return false;
 	}
 
-	CRC32_Init( crcvalue );
+	CRC32_Init(  crcvalue );
 
 	for( i = LUMP_PLANES; i < HEADER_LUMPS; i++ )
 	{
