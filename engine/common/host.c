@@ -1024,7 +1024,11 @@ Host_InitCommon
 */
 static void Host_InitCommon( int argc, char **argv, const char *progname, qboolean bChangeGame, char *exename, size_t exename_size )
 {
+	#ifdef XASH_N64
+	const char *basedir = "rom:/";
+	#else
 	const char *basedir = progname[0] == '#' ? progname + 1 : progname;
+	#endif
 	char dev_level[4], ticrate[16];
 	int developer = DEFAULT_DEV;
 

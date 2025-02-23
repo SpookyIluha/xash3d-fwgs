@@ -133,8 +133,9 @@ static void FS_UnloadProgs( void )
 		fs_hInstance = 0;
 	}
 }
-
-#ifdef XASH_INTERNAL_GAMELIBS
+#ifdef XASH_N64
+#define FILESYSTEM_STDIO_DLL "rom:/filesystem_stdio." OS_LIB_EXT
+#elif XASH_INTERNAL_GAMELIBS
 #define FILESYSTEM_STDIO_DLL "filesystem_stdio"
 #else
 #define FILESYSTEM_STDIO_DLL "filesystem_stdio." OS_LIB_EXT
@@ -273,8 +274,14 @@ FS_Init
 void FS_Init( const char *basedir )
 {
 	string gamedir;
-	char rodir[MAX_OSPATH], rootdir[MAX_OSPATH];
-	rodir[0] = rootdir[0] = 0;
+	#ifdef XASH_N64
+	const char* rootdir = basedir;
+	#else
+	char rootdir[MAX_OSPATH];
+	rootdir[0] = 0;
+	#endif
+	char rodir[MAX_OSPATH];
+	rodir[0] = 0;
 
 	if( !FS_DetermineRootDirectory( rootdir, sizeof( rootdir )) || !COM_CheckStringEmpty( rootdir ))
 	{

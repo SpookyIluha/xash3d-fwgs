@@ -47,6 +47,19 @@ static void Sys_ChangeGame( const char *progname )
 
 static int Sys_Start( void )
 {
+	debug_init_isviewer();
+	debug_init_usblog();
+
+	debugf( "Starting...\n\n" );
+
+	asset_init_compression(2);
+
+	dfs_init(DFS_DEFAULT_LOCATION);
+
+	timer_init();
+	rdpq_init();
+	joypad_init();
+	timer_init();
 
 	Q_strncpy( szGameDir, XASH_GAMEDIR, sizeof( szGameDir ));
 
@@ -74,22 +87,6 @@ static int Sys_Start( void )
 
 int main( int argc, char **argv )
 {
-
-#if XASH_N64
-	debug_init_isviewer();
-	debug_init_usblog();
-
-	debugf( "Starting...\n\n" );
-
-	asset_init_compression(2);
-
-	dfs_init(DFS_DEFAULT_LOCATION);
-
-	timer_init();
-	rdpq_init();
-	joypad_init();
-	timer_init();
-#endif
 	
 #if XASH_PSVITA
 	// inject -dev -console into args if required

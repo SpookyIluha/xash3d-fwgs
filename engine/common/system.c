@@ -90,9 +90,6 @@ void Sys_DebugBreak( void )
 
 #if _MSC_VER
 	__debugbreak();
-#else // !_MSC_VER
-	INLINE_RAISE( SIGINT );
-	INLINE_NANOSLEEP1(); // sometimes signal comes with delay, let it interrupt nanosleep
 #endif // !_MSC_VER
 
 #if XASH_SDL

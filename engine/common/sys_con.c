@@ -268,7 +268,7 @@ static void Sys_PrintStdout( const char *logtime, size_t logtime_len, const char
 #endif
 #elif XASH_N64
 	// just spew it to stderr normally in debug mode
-	debugf("%s %s", logtime, buf );
+	debugf("%s ", logtime );
 #elif !XASH_WIN32 // Wcon does the job
 	Sys_PrintLogfile( STDOUT_FILENO, logtime, logtime_len, msg, XASH_COLORIZE_CONSOLE );
 	Sys_FlushStdout();
@@ -408,7 +408,7 @@ void Con_Reportf( const char *szFmt, ... )
 #if XASH_MESSAGEBOX == MSGBOX_STDERR
 void Platform_MessageBox( const char *title, const char *message, qboolean parentMainWindow )
 {
-	debugf( stderr,
+	debugf( 
 		 "======================================\n"
 		 "%s: %s\n"
 		 "======================================\n", title, message );
