@@ -27,6 +27,7 @@ GNU General Public License for more details.
 #define XASH_GAMEDIR "valve" // !!! Replace with your default (base) game directory !!!
 #endif
 
+
 #if XASH_WIN32
 #error "Single-binary or dedicated builds aren't supported for Windows!"
 #endif
@@ -35,6 +36,10 @@ static char        szGameDir[128]; // safe place to keep gamedir
 static int         szArgc;
 static char        **szArgv;
 
+#if XASH_N64
+#include <libdragon.h>
+#endif
+
 static void Sys_ChangeGame( const char *progname )
 {
 	// stub
@@ -42,6 +47,7 @@ static void Sys_ChangeGame( const char *progname )
 
 static int Sys_Start( void )
 {
+
 	Q_strncpy( szGameDir, XASH_GAMEDIR, sizeof( szGameDir ));
 
 #if XASH_EMSCRIPTEN
@@ -68,6 +74,23 @@ static int Sys_Start( void )
 
 int main( int argc, char **argv )
 {
+
+#if XASH_N64
+	debug_init_isviewer();
+	debug_init_usblog();
+
+	debugf( "Starting...\n\n" );
+
+	asset_init_compression(2);
+
+	dfs_init(DFS_DEFAULT_LOCATION);
+
+	timer_init();
+	rdpq_init();
+	joypad_init();
+	timer_init();
+#endif
+	
 #if XASH_PSVITA
 	// inject -dev -console into args if required
 	szArgc = PSVita_GetArgv( argc, argv, &szArgv );

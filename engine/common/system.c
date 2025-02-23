@@ -464,6 +464,11 @@ print into window console
 */
 void Sys_Print( const char *pMsg )
 {
+	#if XASH_N64
+	assertf(0,  pMsg);
+	debugf(pMsg);
+	return;
+	#endif
 #if !XASH_DEDICATED
 	if( !Host_IsDedicated() )
 	{

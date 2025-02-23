@@ -35,6 +35,11 @@ static const char idat_sign[] = {'I', 'D', 'A', 'T'};
 static const char iend_sign[] = {'I', 'E', 'N', 'D'};
 static const int  iend_crc32 = 0xAE426082;
 
+#ifdef XASH_N64
+qboolean Image_LoadPNG( const char *name, const byte *buffer, fs_offset_t filesize ){return false;};
+qboolean Image_SavePNG( const char *name, rgbdata_t *pix ){return false;};
+#else
+
 /*
 =============
 Image_LoadPNG
@@ -716,3 +721,4 @@ qboolean Image_SavePNG( const char *name, rgbdata_t *pix )
 	Mem_Free( buffer );
 	return true;
 }
+#endif

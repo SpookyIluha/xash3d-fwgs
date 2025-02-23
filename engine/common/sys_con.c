@@ -408,7 +408,7 @@ void Con_Reportf( const char *szFmt, ... )
 #if XASH_MESSAGEBOX == MSGBOX_STDERR
 void Platform_MessageBox( const char *title, const char *message, qboolean parentMainWindow )
 {
-	fprintf( stderr,
+	debugf( stderr,
 		 "======================================\n"
 		 "%s: %s\n"
 		 "======================================\n", title, message );

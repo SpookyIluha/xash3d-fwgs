@@ -60,6 +60,7 @@ XASH_SRCS = \
 	engine/common/cvar.c \
 	engine/common/dedicated.c \
 	engine/common/filesystem_engine.c \
+	engine/common/munge.c \
 	engine/common/host.c \
 	engine/common/host_state.c\
 	engine/common/hpak.c\
@@ -94,6 +95,7 @@ XASH_SRCS = \
 	engine/common/world.c \
 	engine/common/zone.c \
 	public/build.c \
+	public/build_vcs.c \
 	public/crclib.c \
 	public/crtlib.c \
 	public/matrixlib.c \

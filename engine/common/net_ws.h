@@ -50,6 +50,8 @@ typedef enum
 
 #include "netadr.h"
 
+#ifndef XASH_NO_NETWORK
+
 extern convar_t net_showpackets;
 extern convar_t net_clockwindow;
 extern convar_t net_send_debug;
@@ -93,5 +95,52 @@ void HTTP_Shutdown( void );
 void HTTP_ResetProcessState( void );
 void HTTP_Init( void );
 void HTTP_Run( void );
+#else
+extern convar_t net_showpackets;
+extern convar_t net_clockwindow;
+extern convar_t net_send_debug;
+extern convar_t net_recv_debug;
+
+inline void NET_Init( void ){};
+inline void NET_Shutdown( void ){};
+inline void NET_Sleep( int msec ){};
+inline qboolean NET_IsActive( void ){return false;};
+inline qboolean NET_IsConfigured( void ){return true;};
+inline void NET_Config( qboolean net_enable, qboolean changeport ){};
+inline const char *NET_AdrToString( const netadr_t a ) {return NULL;};
+inline const char *NET_BaseAdrToString( const netadr_t a ) {return NULL;};
+inline qboolean NET_IsReservedAdr( netadr_t a ){return false;};
+inline qboolean NET_StringToAdr( const char *string, netadr_t *adr ){return false;};
+inline qboolean NET_StringToFilterAdr( const char *s, netadr_t *adr, uint *prefixlen ){return false;};
+inline net_gai_state_t NET_StringToAdrNB( const char *string, netadr_t *adr, qboolean v6only ){net_gai_state_t s; return s;};
+inline int NET_CompareAdrSort( const void *_a, const void *_b ){return 0;};
+inline qboolean NET_CompareAdr( const netadr_t a, const netadr_t b ){return false;};
+inline qboolean NET_CompareBaseAdr( const netadr_t a, const netadr_t b ){return false;};
+inline qboolean NET_CompareAdrByMask( const netadr_t a, const netadr_t b, uint prefixlen ){return false;};
+inline qboolean NET_GetPacket( netsrc_t sock, netadr_t *from, byte *data, size_t *length ){return false;};
+inline void NET_SendPacket( netsrc_t sock, size_t length, const void *data, netadr_t to ){};
+inline void NET_SendPacketEx( netsrc_t sock, size_t length, const void *data, netadr_t to, size_t splitsize ){};
+inline void NET_IP6BytesToNetadr( netadr_t *adr, const uint8_t *ip6 ){};
+inline void NET_NetadrToIP6Bytes( uint8_t *ip6, const netadr_t *adr ){};
+
+static inline qboolean NET_IsLocalAddress( netadr_t adr )
+{
+	return NET_NetadrType( &adr ) == NA_LOOPBACK;
+}
+
+#if !XASH_DEDICATED
+int CL_GetSplitSize( void ){return  0};
+#endif
+
+inline void HTTP_AddCustomServer( const char *url ){};
+inline void HTTP_AddDownload( const char *path, int size, qboolean process, resource_t *res ){};
+inline void HTTP_ClearCustomServers( void ){};
+inline void HTTP_Shutdown( void ){};
+inline void HTTP_ResetProcessState( void ){};
+inline void HTTP_Init( void ){};
+inline void HTTP_Run( void ){};
+
+
+#endif
 
 #endif//NET_WS_H
