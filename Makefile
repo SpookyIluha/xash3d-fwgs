@@ -5,7 +5,7 @@ TARGET = xash.elf
 include engine.mk
 
 OBJS =  $(XASH_OBJS) $(XASH_SERVER_OBJS) 
-#LIBS = -L../hlsdk-portable_dc/dlls -L../hlsdk-portable_dc/cl_dll -Ldfsfolder -L$(KOS_BASE)/addons/lib/$(KOS_ARCH) -L$(KOS_PORTS)/lib -Lref/gldc -lSDL_gl -lm  -ldfsfolder_stdio -lhl -lcl_dll -lref_gldc -l:libGL.a 
+#LIBS = -L../hlsdk-portable_dc/dlls -L../hlsdk-portable_dc/cl_dll -Lfilesystem -L$(KOS_BASE)/addons/lib/$(KOS_ARCH) -L$(KOS_PORTS)/lib -Lref/gldc -lSDL_gl -lm  -lfilesystem_stdio -lhl -lcl_dll -lref_gldc -l:libGL.a 
 
 # Directories
 
@@ -20,6 +20,12 @@ N64_CXXFLAGS += $(INCLUDE) $(DEFINES) $(FLAGS) -std=gnu++11 -fpermissive -DXASH_
 N64_CFLAGS   += $(INCLUDE) $(DEFINES) $(FLAGS) -DXASH_N64=1
 
 
+DSO_COMPRESS_LEVEL=0 #Store DSOs uncompressed for easier analysis of output
+filesystem_SRC = $(XASH_FS_DSO_SRCS)
+MAIN_ELF_EXTERNS := $(BUILD_DIR)/Xash64.externs
+DSO_MODULES = filesystem_stdio.dso
+DSO_LIST = $(addprefix filesystem/, $(DSO_MODULES))
+
 # Compiler Flags
 #KOS_CPPSTD	:= -std=c++20
 #LDLIBS 		:= -lstb_image -lGL -lkmg -lkosutils -lwav
@@ -30,49 +36,53 @@ assets_stl = $(wildcard assets/stls/*.stl)
 assets_xyzuv = $(wildcard assets/xyzuv/*.xyzuv)
 assets_fonts = $(wildcard assets/fonts/*.ttf)
 
-assets_conv = $(addprefix dfsfolder/textures/,$(notdir $(assets_png:%.png=%.sprite))) \
-			  $(addprefix dfsfolder/audios/,$(notdir $(assets_wav:%.wav=%.wav64))) \
-			  $(addprefix dfsfolder/stls/,$(notdir $(assets_stl:%.stl=%.stl))) \
-			  $(addprefix dfsfolder/xyzuv/,$(notdir $(assets_xyzuv:%.xyzuv=%.xyzuv))) \
-			  $(addprefix dfsfolder/fonts/,$(notdir $(assets_fonts:%.ttf=%.font64))) 
+assets_conv = $(addprefix filesystem/textures/,$(notdir $(assets_png:%.png=%.sprite))) \
+			  $(addprefix filesystem/audios/,$(notdir $(assets_wav:%.wav=%.wav64))) \
+			  $(addprefix filesystem/stls/,$(notdir $(assets_stl:%.stl=%.stl))) \
+			  $(addprefix filesystem/xyzuv/,$(notdir $(assets_xyzuv:%.xyzuv=%.xyzuv))) \
+			  $(addprefix filesystem/fonts/,$(notdir $(assets_fonts:%.ttf=%.font64))) 
 
 all: Xash64.z64
 
-dfsfolder/textures/%.sprite: assets/textures/%.png
+filesystem/textures/%.sprite: assets/textures/%.png
 	@mkdir -p $(dir $@)
 	@echo "    [SPRITE] $@"
-	$(N64_MKSPRITE) $(MKSPRITE_FLAGS) -d -o dfsfolder/textures "$<"
+	$(N64_MKSPRITE) $(MKSPRITE_FLAGS) -d -o filesystem/textures "$<"
 
-dfsfolder/stls/%.stl: assets/stls/%.stl
+filesystem/stls/%.stl: assets/stls/%.stl
 	@mkdir -p $(dir $@)
 	@echo "    [STL] $@"
 	cp "$<" $@
 
-dfsfolder/xyzuv/%.xyzuv: assets/xyzuv/%.xyzuv
+filesystem/xyzuv/%.xyzuv: assets/xyzuv/%.xyzuv
 	@mkdir -p $(dir $@)
 	@echo "    [XYZUV] $@"
 	cp "$<" $@
 
-dfsfolder/audios/%.wav64: assets/audios/%.wav
+filesystem/audios/%.wav64: assets/audios/%.wav
 	@mkdir -p $(dir $@)
 	@echo "    [AUDIO] $@"
-	@$(N64_AUDIOCONV) --wav-compress 1 -o dfsfolder/audios $<
+	@$(N64_AUDIOCONV) --wav-compress 1 -o filesystem/audios $<
 
-dfsfolder/fonts/%.font64: assets/fonts/%.ttf
+filesystem/fonts/%.font64: assets/fonts/%.ttf
 	@mkdir -p $(dir $@)
 	@echo "    [FONT] $@"
-	$(N64_MKFONT) $(MKFONT_FLAGS) -o dfsfolder/fonts "$<"
+	$(N64_MKFONT) $(MKFONT_FLAGS) -o filesystem/fonts "$<"
 
 
-$(BUILD_DIR)/Xash64.dfs: $(assets_conv)
-$(BUILD_DIR)/Xash64.elf: $(SRCS:%.c=$(BUILD_DIR)/%.o)
+$(BUILD_DIR)/Xash64.dfs: $(assets_conv) $(DSO_LIST)
+$(BUILD_DIR)/Xash64.elf: $(SRCS:%.c=$(BUILD_DIR)/%.o) $(MAIN_ELF_EXTERNS)
+$(MAIN_ELF_EXTERNS): $(DSO_LIST)
+
+filesystem/filesystem_stdio.dso: $(filesystem_SRC:%.c=$(BUILD_DIR)/%.o)
+$(BUILD_DIR)/Xash64.msym: $(BUILD_DIR)/Xash64.elf
 
 Xash64.z64: N64_ROM_TITLE="Xash 64 Build"
-Xash64.z64: $(BUILD_DIR)/Xash64.dfs
+Xash64.z64: $(BUILD_DIR)/Xash64.dfs $(BUILD_DIR)/Xash64.msym
 
 clean:
 	rm -rf $(BUILD_DIR) *.z64
-	rm -rf dfsfolder
+	rm -rf filesystem
 
 build_lib:
 	rm -rf $(BUILD_DIR) *.z64
