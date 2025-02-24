@@ -29,8 +29,11 @@ GNU General Public License for more details.
 #include <io.h>
 #elif XASH_DOS4GW
 #include <direct.h>
+#elif XASH_N64
+#include <libdragon.h>
+#define DIR ___
 #else
-#include <dirent.h>
+#include <dir.h>
 #endif
 #include <stdio.h>
 #include <stdarg.h>
@@ -49,7 +52,7 @@ GNU General Public License for more details.
 #include "common/protocol.h"
 
 #define FILE_COPY_SIZE		(1024 * 1024)
-#define SAVE_AGED_COUNT 2 // the default count of quick and auto saves
+#define SAVE_AGED_COUNT 0 // the default count of quick and auto saves
 
 fs_globals_t FI;
 qboolean      fs_ext_path = false;	// attempt to read\write from ./ or ../ pathes
@@ -251,7 +254,18 @@ void listdirectory( stringlist_t *list, const char *path, qboolean dirs_only )
 		stringlistappend( list, n_file.name );
 	}
 	_findclose( hFile );
+#elif XASH_N64
+	char sbuf[1024];
+	strcat(sbuf, path);
+	size_t size = strlen(sbuf);
+	if (dfs_dir_findfirst(path, sbuf+size) != FLAGS_EOF) {
+		do {
+			stringlistappend( list, sbuf );
+		} while (dfs_dir_findnext(sbuf+size) != FLAGS_EOF);
+	}
+
 #else
+	
 	DIR *dir;
 	struct dirent *entry;
 
@@ -313,6 +327,7 @@ Only used for FS_Open.
 */
 void FS_CreatePath( char *path )
 {
+	return;
 	char	*ofs, save;
 
 	for( ofs = path + 1; *ofs; ofs++ )
@@ -322,7 +337,7 @@ void FS_CreatePath( char *path )
 			// create the directory
 			save = *ofs;
 			*ofs = 0;
-			_mkdir( path );
+			//_mkdir( path );
 			*ofs = save;
 		}
 	}
@@ -532,6 +547,7 @@ assume GameInfo is valid
 */
 static qboolean FS_WriteGameInfo( const char *filepath, gameinfo_t *GameInfo )
 {
+	/*
 	file_t	*f = FS_Open( filepath, "w", false ); // we in binary-mode
 	int	i, write_ambients = false;
 
@@ -660,6 +676,7 @@ static qboolean FS_WriteGameInfo( const char *filepath, gameinfo_t *GameInfo )
 	FS_Close( f );	// all done
 
 	return true;
+	*/ return false;
 }
 
 static void FS_MakeGameInfo( void )
@@ -1806,11 +1823,12 @@ Internal function used to create a file_t and open the relevant non-packed file 
 */
 file_t *FS_SysOpen( const char *filepath, const char *mode )
 {
+	int FHDL = -1;
 	file_t *file;
 	int mod, opt, fd = -1;
 	qboolean memfile = false;
 	uint ind;
-
+#ifndef XASH_N64
 	// Parse the mode string
 	switch( mode[0] )
 	{
@@ -1819,16 +1837,13 @@ file_t *FS_SysOpen( const char *filepath, const char *mode )
 		opt = 0;
 		break;
 	case 'w': // write
-		mod = O_WRONLY;
-		opt = O_CREAT | O_TRUNC;
+		return NULL;
 		break;
 	case 'a': // append
-		mod = O_WRONLY;
-		opt = O_CREAT | O_APPEND;
+		return NULL;
 		break;
 	case 'e': // edit
-		mod = O_WRONLY;
-		opt = O_CREAT;
+		return NULL;
 		break;
 	default:
 		return NULL;
@@ -1867,11 +1882,13 @@ file_t *FS_SysOpen( const char *filepath, const char *mode )
 #endif
 		// if it's unsupported, we can open it on disk
 	}
-
+#endif
 	if( fd < 0 )
 	{
 #if XASH_WIN32
 		fd = _wopen( FS_PathToWideChar( filepath ), mod | opt, 0666 );
+#elif XASH_N64
+		fd = dfs_open(filepath);
 #else
 		fd = open( filepath, mod|opt, 0666 );
 #endif
@@ -1886,25 +1903,24 @@ file_t *FS_SysOpen( const char *filepath, const char *mode )
 	}
 
 	file = (file_t *)Mem_Calloc( fs_mempool, sizeof( *file ));
-	file->filetime = memfile ? 0 : FS_SysFileTime( filepath );
+	file->filetime = 0;
 	file->ungetc = EOF;
 	file->handle = fd;
 
-#if !XASH_WIN32
+#if !XASH_WIN32 && !XASH_N64
 	if( !memfile )
 		FS_BackupFileName( file, filepath, mod|opt );
 #endif
 
 	file->searchpath = NULL;
-	file->real_length = lseek( file->handle, 0, SEEK_END );
+	file->real_length = dfs_size(fd);
 
-	// uncomment do disable write
 	//if( opt & O_CREAT )
 	//	return NULL;
 
 	// For files opened in append mode, we start at the end of the file
-	if( opt & O_APPEND )  file->position = file->real_length;
-	else lseek( file->handle, 0, SEEK_SET );
+	//if( opt & O_APPEND )  file->position = file->real_length;
+	//else lseek( file->handle, 0, SEEK_SET );
 
 	return file;
 }
@@ -1928,7 +1944,7 @@ file_t *FS_OpenHandle( searchpath_t *searchpath, int handle, fs_offset_t offset,
 #ifdef HAVE_DUP
 	file->handle = dup( handle );
 #else
-	file->handle = open( searchpath->filename, O_RDONLY|O_BINARY );
+	file->handle = dfs_open( searchpath->filename );
 #endif
 
 	if( file->handle < 0 )
@@ -1938,7 +1954,7 @@ file_t *FS_OpenHandle( searchpath_t *searchpath, int handle, fs_offset_t offset,
 		return NULL;
 	}
 
-	if( lseek( file->handle, offset, SEEK_SET ) == -1 )
+	if( dfs_seek( file->handle, offset, SEEK_SET ) == -1 )
 	{
 		Mem_Free( file );
 		return NULL;
@@ -2246,6 +2262,8 @@ file_t *FS_Open( const char *filepath, const char *mode, qboolean gamedironly )
 	// if the file is opened in "write", "append", or "read/write" mode
 	if( mode[0] == 'w' || mode[0] == 'a'|| mode[0] == 'e' || Q_strchr( mode, '+' ))
 	{
+		return NULL;
+		/*
 		char	real_path[MAX_SYSPATH];
 
 		// open the file on disk directly
@@ -2254,7 +2272,7 @@ file_t *FS_Open( const char *filepath, const char *mode, qboolean gamedironly )
 
 		FS_CreatePath( real_path ); // Create directories up to the file
 
-		return FS_SysOpen( real_path, mode );
+		return FS_SysOpen( real_path, mode );*/
 	}
 
 	// else, we look at the various search paths and open the file in read-only mode
@@ -2276,7 +2294,7 @@ int FS_Close( file_t *file )
 
 	if( file->handle >= 0 )
 	{
-		if( close( file->handle ))
+		if( dfs_close( file->handle ))
 			return EOF;
 	}
 
@@ -2308,7 +2326,7 @@ int FS_Flush( file_t *file )
 #if XASH_POSIX
 	if( fsync( file->handle ) < 0 )
 		return EOF;
-#else
+#elif !XASH_N64
 	if( _commit( file->handle ) < 0 )
 		return EOF;
 #endif
@@ -2325,20 +2343,21 @@ Write "datasize" bytes into a file
 */
 fs_offset_t FS_Write( file_t *file, const void *data, size_t datasize )
 {
+	return 0;
 	fs_offset_t	result;
 
 	if( !file ) return 0;
 
 	// if necessary, seek to the exact file position we're supposed to be
 	if( file->buff_ind != file->buff_len )
-		lseek( file->handle, file->buff_ind - file->buff_len, SEEK_CUR );
+		dfs_seek( file->handle, file->buff_ind - file->buff_len, SEEK_CUR );
 
 	// purge cached data
 	FS_Purge( file );
 
 	// write the buffer and update the position
-	result = write( file->handle, data, datasize );
-	file->position = lseek( file->handle, 0, SEEK_CUR );
+	//result = write( file->handle, data, datasize );
+	file->position = dfs_seek( file->handle, 0, SEEK_CUR );
 
 	if( file->real_length < file->position )
 		file->real_length = file->position;
@@ -2414,8 +2433,8 @@ fs_offset_t FS_Read( file_t *file, void *buffer, size_t buffersize )
 				count = (fs_offset_t)( ztk->comp_length - ztk->in_position );
 				if( count > (fs_offset_t)sizeof( ztk->input ))
 					count = (fs_offset_t)sizeof( ztk->input );
-				lseek( file->handle, file->offset + (fs_offset_t)ztk->in_position, SEEK_SET );
-				if( read( file->handle, ztk->input, count ) != count )
+				dfs_seek( file->handle, file->offset + (fs_offset_t)ztk->in_position, SEEK_SET );
+				if( dfs_read( ztk->input, count, 1, file->handle ) != count )
 				{
 					Con_Printf( "%s: unexpected end of file\n", __func__ );
 					break;
@@ -2486,8 +2505,8 @@ fs_offset_t FS_Read( file_t *file, void *buffer, size_t buffersize )
 	{
 		if( count > (fs_offset_t)buffersize )
 			count = (fs_offset_t)buffersize;
-		lseek( file->handle, file->offset + file->position, SEEK_SET );
-		nb = read( file->handle, &((byte *)buffer)[done], count );
+		dfs_seek( file->handle, file->offset + file->position, SEEK_SET );
+		nb = dfs_read(&((byte *)buffer)[done], count, 1, file->handle );
 
 		if( nb > 0 )
 		{
@@ -2501,8 +2520,8 @@ fs_offset_t FS_Read( file_t *file, void *buffer, size_t buffersize )
 	{
 		if( count > (fs_offset_t)sizeof( file->buff ))
 			count = (fs_offset_t)sizeof( file->buff );
-		lseek( file->handle, file->offset + file->position, SEEK_SET );
-		nb = read( file->handle, file->buff, count );
+		dfs_seek( file->handle, file->offset + file->position, SEEK_SET );
+		nb = dfs_read( file->buff, count, 1,file->handle );
 
 		if( nb > 0 )
 		{
@@ -2529,6 +2548,7 @@ Print a string into a file
 */
 int FS_Print( file_t *file, const char *msg )
 {
+	return 0;
 	return FS_Write( file, msg, Q_strlen( msg ));
 }
 
@@ -2541,6 +2561,7 @@ Print a string into a file
 */
 int FS_Printf( file_t *file, const char *format, ... )
 {
+	return 0;
 	int	result;
 	va_list	args;
 
@@ -2560,6 +2581,7 @@ Print a string into a file
 */
 int FS_VPrintf( file_t *file, const char *format, va_list ap )
 {
+	return 0;
 	int	len;
 	fs_offset_t	buff_size = MAX_SYSPATH;
 	char	*tempbuff;
@@ -2578,7 +2600,7 @@ int FS_VPrintf( file_t *file, const char *format, va_list ap )
 		buff_size *= 2;
 	}
 
-	len = write( file->handle, tempbuff, len );
+	//len = write( file->handle, tempbuff, len );
 	Mem_Free( tempbuff );
 
 	return len;
@@ -2708,7 +2730,7 @@ int FS_Seek( file_t *file, fs_offset_t offset, int whence )
 			ztk->in_len = 0;
 			ztk->in_position = 0;
 			file->position = 0;
-			if( lseek( file->handle, file->offset, SEEK_SET ) == -1 )
+			if( dfs_seek( file->handle, file->offset, SEEK_SET ) == -1 )
 				Con_Printf("IMPOSSIBLE: couldn't seek in already opened pk3 file.\n");
 
 			// Reset the Zlib stream
@@ -2739,7 +2761,7 @@ int FS_Seek( file_t *file, fs_offset_t offset, int whence )
 		return 0;
 	}
 
-	if( lseek( file->handle, file->offset + offset, SEEK_SET ) == -1 )
+	if( dfs_seek( file->handle, file->offset + offset, SEEK_SET ) == -1 )
 		return -1;
 	file->position = offset;
 
@@ -2973,6 +2995,7 @@ The filename will be prefixed by the current game directory
 */
 qboolean FS_WriteFile( const char *filename, const void *data, fs_offset_t len )
 {
+	return 0;
 	file_t *file;
 
 	file = FS_Open( filename, "wb", false );
@@ -3116,6 +3139,7 @@ rename specified file from gamefolder
 */
 qboolean FS_Rename( const char *oldname, const char *newname )
 {
+	return 0;
 	char oldname2[MAX_SYSPATH], newname2[MAX_SYSPATH], oldpath[MAX_SYSPATH], newpath[MAX_SYSPATH];
 	int ret;
 
@@ -3164,6 +3188,7 @@ delete specified file from gamefolder
 */
 qboolean GAME_EXPORT FS_Delete( const char *path )
 {
+	return 0;
 	char path2[MAX_SYSPATH], real_path[MAX_SYSPATH];
 	int ret;
 
@@ -3194,6 +3219,7 @@ FS_FileCopy
 */
 qboolean FS_FileCopy( file_t *pOutput, file_t *pInput, int fileSize )
 {
+	return 0;
 	char	*buf = Mem_Malloc( fs_mempool, FILE_COPY_SIZE );
 	int	size, readSize;
 	qboolean	done = true;

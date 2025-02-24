@@ -24,6 +24,8 @@ GNU General Public License for more details.
 #include "filesystem.h"
 #include "miniz.h"
 
+#include "libdragon.h"
+
 #if XASH_ANDROID
 #include <android/asset_manager.h>
 #endif
@@ -34,7 +36,7 @@ extern "C"
 #endif
 
 typedef struct searchpath_s searchpath_t;
-typedef struct dir_s dir_t;
+typedef struct directory_s directory_t;
 typedef struct zip_s zip_t;
 typedef struct pack_s pack_t;
 typedef struct wfile_s wfile_t;
@@ -102,7 +104,7 @@ typedef struct searchpath_s
 
 	union
 	{
-		dir_t   *dir;
+		directory_t   *dir;
 		pack_t  *pack;
 		wfile_t *wad;
 		zip_t   *zip;
@@ -260,7 +262,7 @@ searchpath_t *FS_AddZip_Fullpath( const char *zipfile, int flags );
 // dir.c
 //
 searchpath_t *FS_AddDir_Fullpath( const char *path, int flags );
-qboolean FS_FixFileCase( dir_t *dir, const char *path, char *dst, const size_t len, qboolean createpath );
+qboolean FS_FixFileCase( directory_t *dir, const char *path, char *dst, const size_t len, qboolean createpath );
 void FS_InitDirectorySearchpath( searchpath_t *search, const char *path, int flags );
 
 //

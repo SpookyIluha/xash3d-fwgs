@@ -1384,7 +1384,7 @@ void Host_ShutdownWithReason( const char *reason )
 	host.shutdown_issued = true;
 
 	if( reason != NULL )
-		Con_Printf( S_NOTE "Issuing host shutdown due to reason \"%s\"\n", reason );
+		assertf( 0, "Issuing host shutdown due to reason \"%s\"\n", reason );
 
 	if( host.status != HOST_ERR_FATAL )
 		host.status = HOST_SHUTDOWN; // prepare host to normal shutdown

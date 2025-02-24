@@ -46,12 +46,12 @@ enum
 	DIRENTRY_CASEINSENSITIVE = -2, // directory is already caseinsensitive, just copy whatever is left
 };
 
-typedef struct dir_s
+typedef struct directory_s
 {
 	string name;
 	int numentries;
-	struct dir_s *entries; // sorted
-} dir_t;
+	struct directory_s *entries; // sorted
+} directory_t;
 
 static qboolean Platform_GetDirectoryCaseSensitivity( const char *dir )
 {
@@ -87,12 +87,12 @@ static qboolean Platform_GetDirectoryCaseSensitivity( const char *dir )
 
 static int FS_SortDirEntries( const void *_a, const void *_b )
 {
-	const dir_t *a = _a;
-	const dir_t *b = _b;
+	const directory_t *a = _a;
+	const directory_t *b = _b;
 	return Q_stricmp( a->name, b->name );
 }
 
-static void FS_FreeDirEntries( dir_t *dir )
+static void FS_FreeDirEntries( directory_t *dir )
 {
 	if( dir->entries )
 	{
@@ -105,16 +105,16 @@ static void FS_FreeDirEntries( dir_t *dir )
 	dir->numentries = DIRENTRY_NOT_SCANNED;
 }
 
-static void FS_InitDirEntries( dir_t *dir, const stringlist_t *list )
+static void FS_InitDirEntries( directory_t *dir, const stringlist_t *list )
 {
 	int i;
 
 	dir->numentries = list->numstrings;
-	dir->entries = Mem_Malloc( fs_mempool, sizeof( dir_t ) * dir->numentries );
+	dir->entries = Mem_Malloc( fs_mempool, sizeof( directory_t ) * dir->numentries );
 
 	for( i = 0; i < list->numstrings; i++ )
 	{
-		dir_t *entry = &dir->entries[i];
+		directory_t *entry = &dir->entries[i];
 
 		Q_strncpy( entry->name, list->strings[i], sizeof( entry->name ));
 		entry->numentries = DIRENTRY_NOT_SCANNED;
@@ -124,7 +124,7 @@ static void FS_InitDirEntries( dir_t *dir, const stringlist_t *list )
 	qsort( dir->entries, dir->numentries, sizeof( dir->entries[0] ), FS_SortDirEntries );
 }
 
-static void FS_PopulateDirEntries( dir_t *dir, const char *path )
+static void FS_PopulateDirEntries( directory_t *dir, const char *path )
 {
 	stringlist_t list;
 
@@ -156,7 +156,7 @@ static void FS_PopulateDirEntries( dir_t *dir, const char *path )
 	stringlistfreecontents( &list );
 }
 
-static int FS_FindDirEntry( dir_t *dir, const char *name )
+static int FS_FindDirEntry( directory_t *dir, const char *name )
 {
 	int left, right;
 
@@ -183,10 +183,10 @@ static int FS_FindDirEntry( dir_t *dir, const char *name )
 	return -1;
 }
 
-static void FS_MergeDirEntries( dir_t *dir, const stringlist_t *list )
+static void FS_MergeDirEntries( directory_t *dir, const stringlist_t *list )
 {
 	int i;
-	dir_t temp;
+	directory_t temp;
 
 	// glorified realloc for sorted dir entries
 	// make new array and copy old entries with same name and subentries
@@ -196,8 +196,8 @@ static void FS_MergeDirEntries( dir_t *dir, const stringlist_t *list )
 
 	for( i = 0; i < dir->numentries; i++ )
 	{
-		dir_t *oldentry = &dir->entries[i];
-		dir_t *newentry;
+		directory_t *oldentry = &dir->entries[i];
+		directory_t *newentry;
 		int j;
 
 		// don't care about directories without subentries
@@ -228,7 +228,7 @@ static void FS_MergeDirEntries( dir_t *dir, const stringlist_t *list )
 	dir->entries = temp.entries;
 }
 
-static int FS_MaybeUpdateDirEntries( dir_t *dir, const char *path, const char *entryname )
+static int FS_MaybeUpdateDirEntries( directory_t *dir, const char *path, const char *entryname )
 {
 	stringlist_t list;
 	int ret;
@@ -290,7 +290,7 @@ static inline qboolean FS_AppendToPath( char *dst, size_t *pi, const size_t len,
 	return true;
 }
 
-qboolean FS_FixFileCase( dir_t *dir, const char *path, char *dst, const size_t len, qboolean createpath )
+qboolean FS_FixFileCase( directory_t *dir, const char *path, char *dst, const size_t len, qboolean createpath )
 {
 	const char *prev;
 	const char *next;
@@ -495,7 +495,7 @@ void FS_InitDirectorySearchpath( searchpath_t *search, const char *path, int fla
 	search->pfnSearch = FS_Search_DIR;
 
 	// create cache root
-	search->dir = Mem_Malloc( fs_mempool, sizeof( dir_t ));
+	search->dir = Mem_Malloc( fs_mempool, sizeof( directory_t ));
 	Q_strncpy( search->dir->name, search->filename, sizeof( search->dir->name ));
 	FS_PopulateDirEntries( search->dir, path );
 }

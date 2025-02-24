@@ -12,11 +12,12 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 */
+
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
 #include <stdarg.h>
-#include ALLOCA_H
+#include "alloca.h"
 #include "crtlib.h"
 #include "filesystem.h"
 #include "filesystem_internal.h"

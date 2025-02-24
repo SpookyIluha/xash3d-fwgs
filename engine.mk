@@ -100,7 +100,8 @@ XASH_SRCS = \
 	public/crtlib.c \
 	public/matrixlib.c \
 	public/utflib.c \
-	public/xash3d_mathlib.c 
+	public/xash3d_mathlib.c \
+	public/miniz.c
 
 XASH_SERVER_SRCS =	\
 	engine/server/sv_client.c \
@@ -124,6 +125,14 @@ XASH_PLATFORM_SRCS = \
 	engine/platform/posix/sys_posix.c \
 	engine/platform/stub/s_stub.c \
 
+XASH_FS_DSO_SRCS = \
+	fs_system/dir.c \
+	fs_system/filesystem.c \
+	fs_system/pak.c \
+	fs_system/VFileSystem009.c \
+	fs_system/wad.c \
+	fs_system/zip.c
+
 INCLUDE = -Icommon \
 -Iengine/server \
 -Iengine/client/vgui \
@@ -132,7 +141,7 @@ INCLUDE = -Icommon \
 -Iengine \
 -Iengine/common \
 -Iimagelib \
--Ifilesystem \
+-Ifs_system \
 -Ipublic \
 -Ipm_shared \
 -Iengine/platform \
