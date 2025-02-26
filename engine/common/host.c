@@ -40,6 +40,8 @@ GNU General Public License for more details.
 #include "render_api.h"	// decallist_t
 #include "tests.h"
 
+#include <libdragon.h>
+
 static pfnChangeGame	pChangeGame = NULL;
 host_parm_t		host;	// host parms
 
@@ -1025,7 +1027,7 @@ Host_InitCommon
 static void Host_InitCommon( int argc, char **argv, const char *progname, qboolean bChangeGame, char *exename, size_t exename_size )
 {
 	#ifdef XASH_N64
-	const char *basedir = "rom:/";
+	const char *basedir = "valve";
 	#else
 	const char *basedir = progname[0] == '#' ? progname + 1 : progname;
 	#endif
@@ -1157,6 +1159,9 @@ static void Host_InitCommon( int argc, char **argv, const char *progname, qboole
 
 	host.bugcomp = Host_CheckBugcomp();
 
+	heap_stats_t stats; sys_get_heap_stats(&stats);
+	Con_Printf("Mem stats: %i total, %i used\n", stats.total, stats.used);
+
 	Cmd_AddCommand( "exec", Host_Exec_f, "execute a script file" );
 	Cmd_AddCommand( "memlist", Host_MemStats_f, "prints memory pool information" );
 	Cmd_AddRestrictedCommand( "userconfigd", Host_Userconfigd_f, "execute all scripts from userconfig.d" );
@@ -1172,11 +1177,11 @@ static void Host_InitCommon( int argc, char **argv, const char *progname, qboole
 	FS_LoadGameInfo( NULL );
 	Cvar_PostFSInit();
 
-	Image_CheckPaletteQ1 ();
+	//Image_CheckPaletteQ1 ();
 
 	// NOTE: only once resource without which engine can't continue work
-	if( !FS_FileExists( "gfx/conchars", false ))
-		Sys_Error( "%s: couldn't load gfx.wad\n", __func__ );
+	//if( !FS_FileExists( "gfx/conchars", false ))
+	//	Sys_Error( "%s: couldn't load gfx.wad\n", __func__ );
 
 	Host_InitDecals ();	// reload decals
 

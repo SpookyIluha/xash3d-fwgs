@@ -249,8 +249,8 @@ static inline size_t Q_strncat( char *dst, const char *src, size_t size )
 }
 
 static inline int stricmp(const char *string1, const char *string2) {
-    char* tmp1 = malloc(sizeof(string1));
-    char* tmp2 = malloc(sizeof(string2));
+    char* tmp1 = malloc(strlen(string1));
+    char* tmp2 = malloc(strlen(string2));
 
     strcpy(tmp1, string1);
     strcpy(tmp2, string2);

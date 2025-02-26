@@ -16,6 +16,8 @@
 #ifndef PM_TRACE_H
 #define PM_TRACE_H
 
+#include "xash3d_types.h"
+
 typedef struct
 {
 	vec3_t	normal;

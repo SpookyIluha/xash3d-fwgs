@@ -56,7 +56,7 @@ typedef struct ztoolkit_s
 
 struct file_s
 {
-	int          handle;      // file descriptor
+	FILE*        handle;      // file descriptor
 	int          ungetc;      // single stored character from ungetc, cleared to EOF when read
 	time_t       filetime;    // pak, wad or real filetime
 	searchpath_t *searchpath;
@@ -237,7 +237,7 @@ qboolean FS_SysFileOrFolderExists( const char *path );
 file_t  *FS_OpenReadFile( const char *filename, const char *mode, qboolean gamedironly );
 
 int           FS_SysFileTime( const char *filename );
-file_t       *FS_OpenHandle( searchpath_t *search, int handle, fs_offset_t offset, fs_offset_t len );
+file_t       *FS_OpenHandle( searchpath_t *search, FILE* handle, fs_offset_t offset, fs_offset_t len );
 file_t       *FS_SysOpen( const char *filepath, const char *mode );
 searchpath_t *FS_FindFile( const char *name, int *index, char *fixedname, size_t len, qboolean gamedironly );
 qboolean FS_FullPathToRelativePath( char *dst, const char *src, size_t size );

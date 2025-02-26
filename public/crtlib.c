@@ -23,6 +23,8 @@ GNU General Public License for more details.
 #include "crtlib.h"
 #include "xash3d_mathlib.h"
 
+#include <libdragon.h>
+
 void Q_strnlwr( const char *in, char *out, size_t size_out )
 {
 	size_t len, i;
@@ -750,6 +752,7 @@ skipwhite:
 			{
 				token[len] = 0;
 				if( plen ) *plen = overflow ? -1 : len;
+				debugf("parse: %s\n", token);
 				return data;
 			}
 			data++;
@@ -771,6 +774,7 @@ skipwhite:
 			{
 				token[len] = 0;
 				if( plen ) *plen = overflow ? -1 : len;
+				debugf("parse: %s\n", token);
 				return data;
 			}
 
@@ -792,6 +796,7 @@ skipwhite:
 			len++;
 			token[len] = 0;
 			if( plen ) *plen = overflow ? -1 : len;
+			debugf("parse: %s\n", token);
 			return data + 1;
 		}
 		else
@@ -799,6 +804,7 @@ skipwhite:
 			// couldn't pass anything
 			token[0] = 0;
 			if( plen ) *plen = overflow ? -1 : len;
+				debugf("parse: %s\n", token);
 			return data;
 		}
 	}
@@ -823,6 +829,8 @@ skipwhite:
 	token[len] = 0;
 
 	if( plen ) *plen = overflow ? -1 : len;
+
+	debugf("parse: %s\n", token);
 
 	return data;
 }

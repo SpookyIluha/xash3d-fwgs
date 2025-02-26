@@ -255,13 +255,17 @@ void listdirectory( stringlist_t *list, const char *path, qboolean dirs_only )
 	}
 	_findclose( hFile );
 #elif XASH_N64
-	char sbuf[1024];
-	strcat(sbuf, path);
-	size_t size = strlen(sbuf);
-	if (dfs_dir_findfirst(path, sbuf+size) != FLAGS_EOF) {
+	dir_t sbuf = {0};
+    debugf("find in %s\n", path);
+	int type = dir_findfirst(path, &sbuf);
+	if (type >= 0) {
 		do {
-			stringlistappend( list, sbuf );
-		} while (dfs_dir_findnext(sbuf+size) != FLAGS_EOF);
+			if(!dirs_only || sbuf.d_type == DT_DIR){
+				debugf("	found %s\n", sbuf.d_name);
+				stringlistappend( list, sbuf.d_name );
+			}
+			type = dir_findnext(path, &sbuf);
+		} while (type >= 0);
 	}
 
 #else
@@ -704,9 +708,9 @@ static void FS_InitGameInfo( gameinfo_t *GameInfo, const char *gamedir, qboolean
 		Q_strncpy( GameInfo->title, gamedir, sizeof( GameInfo->title ));
 		Q_strncpy( GameInfo->startmap, "start", sizeof( GameInfo->startmap ));
 		Q_strncpy( GameInfo->dll_path, "bin", sizeof( GameInfo->dll_path ));
-		Q_strncpy( GameInfo->game_dll, "bin/progs.dll", sizeof( GameInfo->game_dll ));
-		Q_strncpy( GameInfo->game_dll_linux, "bin/progs.so", sizeof( GameInfo->game_dll_linux ));
-		Q_strncpy( GameInfo->game_dll_osx, "bin/progs.dylib", sizeof( GameInfo->game_dll_osx ));
+		Q_strncpy( GameInfo->game_dll, "rom:/progs.dll", sizeof( GameInfo->game_dll ));
+		Q_strncpy( GameInfo->game_dll_linux, "rom:/progs.dso", sizeof( GameInfo->game_dll_linux ));
+		Q_strncpy( GameInfo->game_dll_osx, "rom:/progs.dylib", sizeof( GameInfo->game_dll_osx ));
 	}
 	else
 	{
@@ -714,15 +718,15 @@ static void FS_InitGameInfo( gameinfo_t *GameInfo, const char *gamedir, qboolean
 		Q_strncpy( GameInfo->title, "New Game", sizeof( GameInfo->title ));
 		Q_strncpy( GameInfo->startmap, "newmap", sizeof( GameInfo->startmap ));
 		Q_strncpy( GameInfo->dll_path, "cl_dlls", sizeof( GameInfo->dll_path ));
-		Q_strncpy( GameInfo->game_dll, "dlls/hl.dll", sizeof( GameInfo->game_dll ));
-		Q_strncpy( GameInfo->game_dll_linux, "dlls/hl.so", sizeof( GameInfo->game_dll_linux ));
-		Q_strncpy( GameInfo->game_dll_osx, "dlls/hl.dylib", sizeof( GameInfo->game_dll_osx ));
+		Q_strncpy( GameInfo->game_dll, "rom:/hl.dll", sizeof( GameInfo->game_dll ));
+		Q_strncpy( GameInfo->game_dll_linux, "rom:/hl.dso", sizeof( GameInfo->game_dll_linux ));
+		Q_strncpy( GameInfo->game_dll_osx, "rom:/hl.dylib", sizeof( GameInfo->game_dll_osx ));
 	}
 
-	GameInfo->max_edicts     = DEFAULT_MAX_EDICTS; // default value if not specified
-	GameInfo->max_tents      = 500;
-	GameInfo->max_beams      = 128;
-	GameInfo->max_particles  = 4096;
+	GameInfo->max_edicts     = 256; // default value if not specified
+	GameInfo->max_tents      = 300;
+	GameInfo->max_beams      = 64;
+	GameInfo->max_particles  = 1024;
 	GameInfo->version        = 1.0f;
 
 	GameInfo->quicksave_aged_count = SAVE_AGED_COUNT;
@@ -732,6 +736,7 @@ static void FS_InitGameInfo( gameinfo_t *GameInfo, const char *gamedir, qboolean
 static void FS_ParseGenericGameInfo( gameinfo_t *GameInfo, const char *buf, const qboolean isGameInfo )
 {
 	char *pfile = (char*) buf;
+	debugf("pfile: %s\n", pfile);
 	qboolean found_linux = false, found_osx = false;
 	string token;
 
@@ -985,7 +990,7 @@ static void FS_ParseGenericGameInfo( gameinfo_t *GameInfo, const char *buf, cons
 		COM_StripExtension( gamedll );
 
 		if( !found_linux )
-			Q_snprintf( GameInfo->game_dll_linux, sizeof( GameInfo->game_dll_linux ), "%s.so", gamedll );
+			Q_snprintf( GameInfo->game_dll_linux, sizeof( GameInfo->game_dll_linux ), "%s.dso", gamedll );
 
 		if( !found_osx )
 			Q_snprintf( GameInfo->game_dll_osx, sizeof( GameInfo->game_dll_osx ), "%s.dylib", gamedll );
@@ -1149,8 +1154,10 @@ static qboolean FS_ParseGameInfo( const char *gamedir, gameinfo_t *GameInfo, qbo
 	else
 		Q_snprintf( gamedir_path, sizeof( gamedir_path ), "%s", gamedir );
 
+
 	if( !FS_CheckForXashGameDir( gamedir_path ))
 	{
+		
 		// check if we need to generate gameinfo for Quake
 		if( FS_CheckForQuakeGameDir( gamedir_path ))
 		{
@@ -1164,6 +1171,8 @@ static qboolean FS_ParseGameInfo( const char *gamedir, gameinfo_t *GameInfo, qbo
 		return false;
 	}
 
+
+	
 	Q_snprintf( gameinfo_path, sizeof( gameinfo_path ), "%s/gameinfo.txt", gamedir_path );
 	Q_snprintf( liblist_path, sizeof( liblist_path ), "%s/liblist.gam", gamedir_path );
 
@@ -1351,7 +1360,7 @@ void FS_LoadGameInfo( const char *rootfolder )
 	int	i;
 
 	// lock uplevel of gamedir for read\write
-	FS_AllowDirectPaths( false );
+	FS_AllowDirectPaths( true );
 
 	if( rootfolder )
 		Q_strncpy( fs_gamedir, rootfolder, sizeof( fs_gamedir ));
@@ -1364,12 +1373,13 @@ void FS_LoadGameInfo( const char *rootfolder )
 	// validate gamedir
 	for( i = 0; i < FI.numgames; i++ )
 	{
+		Con_Printf	("validate gamedir %s == %s\n", FI.games[i]->gamefolder, fs_gamedir);
 		if( !Q_stricmp( FI.games[i]->gamefolder, fs_gamedir ))
 			break;
 	}
 
 	if( i == FI.numgames )
-		Sys_Error( "Couldn't find game directory '%s'\n", fs_gamedir );
+		Sys_Error( "Couldn't find game directory '%s', numgames %i\n", fs_gamedir,  FI.numgames);
 
 	FI.GameInfo = FI.games[i];
 
@@ -1587,8 +1597,9 @@ static void FS_ValidateDirectories( const char *path, qboolean *has_base_dir, qb
 
 	for( i = 0; i < dirs.numstrings; i++ )
 	{
-		if( !FS_SysFolderExists( dirs.strings[i] ))
-			continue;
+		Con_Printf("directory \"%s\" list: \"%s\", basedir %s, gamedir %s\n", path , dirs.strings[i], fs_basedir, fs_gamedir );
+		//if( !FS_SysFolderExists( dirs.strings[i] ))
+		//	continue;
 
 		if( !Q_stricmp( fs_basedir, dirs.strings[i] ))
 			*has_base_dir = true;
@@ -1640,10 +1651,11 @@ qboolean FS_InitStdio( qboolean unused_set_to_true, const char *rootdir, const c
 		qboolean has_base_dir = false;
 		qboolean has_game_dir = false;
 
-		FS_ValidateDirectories( "./", &has_base_dir, &has_game_dir );
+		FS_ValidateDirectories( fs_rootdir, &has_base_dir, &has_game_dir );
 
 		if( !has_game_dir )
 		{
+			Con_Printf("checking readonly root directory \"%s\"\n", fs_rodir );
 			// look for game directories in RoDir now
 			if( COM_CheckStringEmpty( fs_rodir ))
 				FS_ValidateDirectories( fs_rodir, &has_base_dir, &has_game_dir );
@@ -1676,8 +1688,9 @@ qboolean FS_InitStdio( qboolean unused_set_to_true, const char *rootdir, const c
 
 		for( i = 0; i < dirs.numstrings; i++ )
 		{
-			if( !FS_SysFolderExists( dirs.strings[i] ))
-				continue;
+			//if( !FS_SysFolderExists( dirs.strings[i] ))
+			//	continue;
+			Con_Printf("directory \"%s\" list: \"%s\", basedir %s, gamedir %s\n", fs_rodir , dirs.strings[i], fs_basedir, fs_gamedir );
 
 			if( FI.games[FI.numgames] == NULL )
 				FI.games[FI.numgames] = Mem_Malloc( fs_mempool, sizeof( *FI.games[FI.numgames] ));
@@ -1823,7 +1836,7 @@ Internal function used to create a file_t and open the relevant non-packed file 
 */
 file_t *FS_SysOpen( const char *filepath, const char *mode )
 {
-	int FHDL = -1;
+	FILE* FHDL = NULL;
 	file_t *file;
 	int mod, opt, fd = -1;
 	qboolean memfile = false;
@@ -1888,13 +1901,13 @@ file_t *FS_SysOpen( const char *filepath, const char *mode )
 #if XASH_WIN32
 		fd = _wopen( FS_PathToWideChar( filepath ), mod | opt, 0666 );
 #elif XASH_N64
-		fd = dfs_open(filepath);
+		FHDL = fopen( filepath, mode);
 #else
 		fd = open( filepath, mod|opt, 0666 );
 #endif
 	}
 
-	if( fd < 0 )
+	if( !FHDL )
 	{
 		if( errno != ENOENT )
 			Con_Printf( S_ERROR "%s: can't open file %s: %s\n", __func__, filepath, strerror( errno ));
@@ -1905,7 +1918,7 @@ file_t *FS_SysOpen( const char *filepath, const char *mode )
 	file = (file_t *)Mem_Calloc( fs_mempool, sizeof( *file ));
 	file->filetime = 0;
 	file->ungetc = EOF;
-	file->handle = fd;
+	file->handle = FHDL;
 
 #if !XASH_WIN32 && !XASH_N64
 	if( !memfile )
@@ -1913,7 +1926,10 @@ file_t *FS_SysOpen( const char *filepath, const char *mode )
 #endif
 
 	file->searchpath = NULL;
-	file->real_length = dfs_size(fd);
+
+	fseek(FHDL, 0L, SEEK_END);
+	file->real_length = ftell(FHDL);
+	rewind(FHDL);
 
 	//if( opt & O_CREAT )
 	//	return NULL;
@@ -1937,14 +1953,14 @@ static int FS_DuplicateHandle( const char *filename, int handle, fs_offset_t pos
 }
 */
 
-file_t *FS_OpenHandle( searchpath_t *searchpath, int handle, fs_offset_t offset, fs_offset_t len )
+file_t *FS_OpenHandle( searchpath_t *searchpath, FILE* handle, fs_offset_t offset, fs_offset_t len )
 {
 	file_t *file = (file_t *)Mem_Calloc( fs_mempool, sizeof( file_t ));
 #ifndef XASH_REDUCE_FD
 #ifdef HAVE_DUP
 	file->handle = dup( handle );
 #else
-	file->handle = dfs_open( searchpath->filename );
+	file->handle = fopen( searchpath->filename, "r" );
 #endif
 
 	if( file->handle < 0 )
@@ -1954,7 +1970,7 @@ file_t *FS_OpenHandle( searchpath_t *searchpath, int handle, fs_offset_t offset,
 		return NULL;
 	}
 
-	if( dfs_seek( file->handle, offset, SEEK_SET ) == -1 )
+	if( fseek( file->handle, offset, SEEK_SET ) == -1 )
 	{
 		Mem_Free( file );
 		return NULL;
@@ -1993,7 +2009,15 @@ Look for a file in the filesystem only
 */
 qboolean FS_SysFileExists( const char *path )
 {
-#if XASH_WIN32
+#if XASH_N64
+	FILE* t = fopen(path, "r");
+	bool exists = t != NULL;
+	fclose(t);
+	
+	//assertf(0, "file %s exists? %s\n", path, exists? "true" : "false");
+	return exists;
+
+#elif XASH_WIN32
 	struct _stat buf;
 	if( _wstat( FS_PathToWideChar( path ), &buf ) < 0 )
 #else
@@ -2002,7 +2026,7 @@ qboolean FS_SysFileExists( const char *path )
 #endif
 		return false;
 
-	return S_ISREG( buf.st_mode );
+	//return S_ISREG( buf.st_mode );
 }
 
 /*
@@ -2294,8 +2318,7 @@ int FS_Close( file_t *file )
 
 	if( file->handle >= 0 )
 	{
-		if( dfs_close( file->handle ))
-			return EOF;
+		fclose( file->handle );
 	}
 
 	if( file->ztk )
@@ -2350,14 +2373,14 @@ fs_offset_t FS_Write( file_t *file, const void *data, size_t datasize )
 
 	// if necessary, seek to the exact file position we're supposed to be
 	if( file->buff_ind != file->buff_len )
-		dfs_seek( file->handle, file->buff_ind - file->buff_len, SEEK_CUR );
+		fseek( file->handle, file->buff_ind - file->buff_len, SEEK_CUR );
 
 	// purge cached data
 	FS_Purge( file );
 
 	// write the buffer and update the position
 	//result = write( file->handle, data, datasize );
-	file->position = dfs_seek( file->handle, 0, SEEK_CUR );
+	file->position = fseek( file->handle, 0, SEEK_CUR );
 
 	if( file->real_length < file->position )
 		file->real_length = file->position;
@@ -2392,6 +2415,16 @@ fs_offset_t FS_Read( file_t *file, void *buffer, size_t buffersize )
 		done = 1;
 	}
 	else done = 0;
+
+	#ifdef XASH_N64
+	size_t offset = fread( buffer, buffersize, 1, file->handle );
+		if( offset != buffersize )
+		{
+			Con_Printf( "%s: unexpected end of file\n", __func__ );
+			return offset;
+		}
+		return offset;
+	#endif
 
 	// first, we copy as many bytes as we can from "buff"
 	if( file->buff_ind < file->buff_len )
@@ -2433,8 +2466,8 @@ fs_offset_t FS_Read( file_t *file, void *buffer, size_t buffersize )
 				count = (fs_offset_t)( ztk->comp_length - ztk->in_position );
 				if( count > (fs_offset_t)sizeof( ztk->input ))
 					count = (fs_offset_t)sizeof( ztk->input );
-				dfs_seek( file->handle, file->offset + (fs_offset_t)ztk->in_position, SEEK_SET );
-				if( dfs_read( ztk->input, count, 1, file->handle ) != count )
+				fseek( file->handle, file->offset + (fs_offset_t)ztk->in_position, SEEK_SET );
+				if( fread( ztk->input, count, 1, file->handle ) != count )
 				{
 					Con_Printf( "%s: unexpected end of file\n", __func__ );
 					break;
@@ -2505,8 +2538,8 @@ fs_offset_t FS_Read( file_t *file, void *buffer, size_t buffersize )
 	{
 		if( count > (fs_offset_t)buffersize )
 			count = (fs_offset_t)buffersize;
-		dfs_seek( file->handle, file->offset + file->position, SEEK_SET );
-		nb = dfs_read(&((byte *)buffer)[done], count, 1, file->handle );
+		fseek( file->handle, file->offset + file->position, SEEK_SET );
+		nb = fread(&((byte *)buffer)[done], count, 1, file->handle );
 
 		if( nb > 0 )
 		{
@@ -2520,8 +2553,8 @@ fs_offset_t FS_Read( file_t *file, void *buffer, size_t buffersize )
 	{
 		if( count > (fs_offset_t)sizeof( file->buff ))
 			count = (fs_offset_t)sizeof( file->buff );
-		dfs_seek( file->handle, file->offset + file->position, SEEK_SET );
-		nb = dfs_read( file->buff, count, 1,file->handle );
+		fseek( file->handle, file->offset + file->position, SEEK_SET );
+		nb = fread( file->buff, count, 1,file->handle );
 
 		if( nb > 0 )
 		{
@@ -2730,7 +2763,7 @@ int FS_Seek( file_t *file, fs_offset_t offset, int whence )
 			ztk->in_len = 0;
 			ztk->in_position = 0;
 			file->position = 0;
-			if( dfs_seek( file->handle, file->offset, SEEK_SET ) == -1 )
+			if( fseek( file->handle, file->offset, SEEK_SET ) == -1 )
 				Con_Printf("IMPOSSIBLE: couldn't seek in already opened pk3 file.\n");
 
 			// Reset the Zlib stream
@@ -2761,7 +2794,7 @@ int FS_Seek( file_t *file, fs_offset_t offset, int whence )
 		return 0;
 	}
 
-	if( dfs_seek( file->handle, file->offset + offset, SEEK_SET ) == -1 )
+	if( fseek( file->handle, file->offset + offset, SEEK_SET ) == -1 )
 		return -1;
 	file->position = offset;
 
@@ -2967,7 +3000,7 @@ byte *FS_LoadDirectFile( const char *path, fs_offset_t *filesizeptr )
 	byte		*buf = NULL;
 	fs_offset_t	filesize = 0;
 
-	file = FS_SysOpen( path, "rb" );
+	file = FS_SysOpen( path, "r" );
 
 	if( !file )
 		return NULL;

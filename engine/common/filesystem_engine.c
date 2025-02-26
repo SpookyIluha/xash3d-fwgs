@@ -15,11 +15,17 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
-
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include "common.h"
 #include "library.h"
 #include "platform/platform.h"
+
+#include <libdragon.h>
 
 CVAR_DEFINE_AUTO( fs_mount_hd, "0", FCVAR_ARCHIVE|FCVAR_PRIVILEGED|FCVAR_LATCH, "mount high definition content folder" );
 CVAR_DEFINE_AUTO( fs_mount_lv, "0", FCVAR_ARCHIVE|FCVAR_PRIVILEGED|FCVAR_LATCH, "mount low violence models content folder" );
@@ -181,19 +187,32 @@ static qboolean FS_LoadProgs( void )
 
 static qboolean FS_DetermineRootDirectory( char *out, size_t size )
 {
+#if XASH_N64
+	const char *path = NULL;
+#else
 	const char *path = getenv( "XASH3D_BASEDIR" );
+#endif
 
+#if XASH_N64
+	path = "sd:/";
+    bool sd_card_initialized = debug_init_sdfs(path, -1);
+	if (sd_card_initialized)
+	{
+		path = "sd:/xash3d/";
+	}
+
+	if(path)
+	if (mkdir(path, 0777) && (errno != EEXIST)); // create RW directorty on device manually
+#endif
 	if( COM_CheckString( path ))
 	{
 		Q_strncpy( out, path, size );
+		Sys_Print( "created path in sd card access\n");
 		return true;
 	}
 
 #if TARGET_OS_IOS
 	Q_strncpy( out, IOS_GetDocsDir(), size );
-	return true;
-#elif XASH_N64
-	strncpy(out, "rom:/", size);
 	return true;
 #elif XASH_ANDROID && XASH_SDL
 	path = SDL_AndroidGetExternalStoragePath();
@@ -207,23 +226,14 @@ static qboolean FS_DetermineRootDirectory( char *out, size_t size )
 #elif XASH_PSVITA
 	if( PSVita_GetBasePath( out, size ))
 		return true;
-	Sys_Error( "couldn't find %s data directory", XASH_ENGINE_NAME );
+	Sys_Error( "couldn't find Xash3D data directory" );
 	return false;
 #elif ( XASH_SDL == 2 ) && !XASH_NSWITCH // GetBasePath not impl'd in switch-sdl2
 	path = SDL_GetBasePath();
-
-#if XASH_APPLE
-	if( path != NULL && Q_stristr( path, ".app" ))
-	{
-		SDL_free((void *)path );
-		path = SDL_GetPrefPath( NULL, XASH_ENGINE_NAME );
-	}
-#endif
-
 	if( path != NULL )
 	{
 		Q_strncpy( out, path, size );
-		SDL_free((void *)path );
+		SDL_free(( void *)path );
 		return true;
 	}
 
@@ -236,17 +246,21 @@ static qboolean FS_DetermineRootDirectory( char *out, size_t size )
 #endif // !( XASH_POSIX || XASH_WIN32 )
 	return false;
 #else // generic case
-	if( getcwd( out, size ))
-		return true;
+	//if( getcwd( out, size ))
+	//	return true;
 
-	Sys_Error( "couldn't determine current directory: %s", strerror( errno ));
+	//Sys_Error( "couldn't determine current directory: %s", strerror( errno ));
 	return false;
 #endif // generic case
 }
 
 static qboolean FS_DetermineReadOnlyRootDirectory( char *out, size_t size )
 {
-	const char *env_rodir = getenv( "XASH3D_RODIR" );
+	#if XASH_N64
+	const char *env_rodir = "rom:/";
+	#else
+		const char *env_rodir = getenv( "XASH3D_RODIR" );
+	#endif	
 
 	if( _Sys_GetParmFromCmdLine( "-rodir", out, size ))
 		return true;
@@ -274,26 +288,20 @@ FS_Init
 void FS_Init( const char *basedir )
 {
 	string gamedir;
-	#ifdef XASH_N64
-	const char* rootdir = basedir;
-	#else
-	char rootdir[MAX_OSPATH];
-	rootdir[0] = 0;
-	#endif
-	char rodir[MAX_OSPATH];
-	rodir[0] = 0;
+	char rodir[MAX_OSPATH], rootdir[MAX_OSPATH];
+	rodir[0] = rootdir[0] = 0;
 
-	if( !FS_DetermineRootDirectory( rootdir, sizeof( rootdir )) || !COM_CheckStringEmpty( rootdir ))
+	/*if( !FS_DetermineRootDirectory( rootdir, sizeof( rootdir )) || !COM_CheckStringEmpty( rootdir ))
 	{
 		Sys_Error( "couldn't determine current directory (empty string)" );
 		return;
 	}
 	COM_FixSlashes( rootdir );
-	COM_StripDirectorySlash( rootdir );
+	COM_StripDirectorySlash( rootdir );*/
 
 	FS_DetermineReadOnlyRootDirectory( rodir, sizeof( rodir ));
-	COM_FixSlashes( rodir );
-	COM_StripDirectorySlash( rodir );
+	//COM_FixSlashes( rodir );
+	//COM_StripDirectorySlash( rodir );
 
 	if( !Sys_GetParmFromCmdLine( "-game", gamedir ))
 	{
@@ -323,11 +331,6 @@ void FS_Init( const char *basedir )
 	Cmd_AddRestrictedCommand( "fs_path", FS_Path_f_, "show filesystem search pathes" );
 	Cmd_AddRestrictedCommand( "fs_clearpaths", FS_ClearPaths_f, "clear filesystem search pathes" );
 	Cmd_AddRestrictedCommand( "fs_make_gameinfo", FS_MakeGameInfo_f, "create gameinfo.txt for current running game" );
-
-	Cvar_RegisterVariable( &fs_mount_hd );
-	Cvar_RegisterVariable( &fs_mount_lv );
-	Cvar_RegisterVariable( &fs_mount_addon );
-	Cvar_RegisterVariable( &fs_mount_l10n );
 
 	if( !Sys_GetParmFromCmdLine( "-dll", host.gamedll ))
 		host.gamedll[0] = 0;

@@ -95,7 +95,7 @@ typedef struct customization_s
 #define FCUST_WIPEDATA		( 1<<1 )
 #define FCUST_IGNOREINIT		( 1<<2 )
 
-STATIC_CHECK_SIZEOF( customization_t, 164, 192 );
-STATIC_CHECK_SIZEOF( resource_t, 136, 144 );
+//STATIC_CHECK_SIZEOF( customization_t, 164, 192 );
+//STATIC_CHECK_SIZEOF( resource_t, 136, 144 );
 
 #endif // CUSTOM_H

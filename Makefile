@@ -3,6 +3,7 @@ PROJECT_NAME = xash
 TARGET = xash.elf
 
 include engine.mk
+include game.mk
 
 OBJS =  $(XASH_OBJS) $(XASH_SERVER_OBJS) 
 #LIBS = -L../hlsdk-portable_dc/dlls -L../hlsdk-portable_dc/cl_dll -Lfilesystem -L$(KOS_BASE)/addons/lib/$(KOS_ARCH) -L$(KOS_PORTS)/lib -Lref/gldc -lSDL_gl -lm  -lfilesystem_stdio -lhl -lcl_dll -lref_gldc -l:libGL.a 
@@ -22,21 +23,30 @@ N64_CFLAGS   += $(INCLUDE) $(DEFINES) $(FLAGS) -DXASH_N64=1
 
 DSO_COMPRESS_LEVEL=0 #Store DSOs uncompressed for easier analysis of output
 filesystem_SRC = $(XASH_FS_DSO_SRCS)
+hldll_SRC = $(GAME_SRCS)
 MAIN_ELF_EXTERNS := $(BUILD_DIR)/Xash64.externs
-DSO_MODULES = filesystem_stdio.dso
+DSO_MODULES = filesystem_stdio.dso hl_mips_n64.dso
 DSO_LIST = $(addprefix filesystem/, $(DSO_MODULES))
 
 # Compiler Flags
 #KOS_CPPSTD	:= -std=c++20
 #LDLIBS 		:= -lstb_image -lGL -lkmg -lkosutils -lwav
 
-assets_png = $(wildcard assets/textures/*.png)
-assets_wav = $(wildcard assets/audios/*.wav)
-assets_stl = $(wildcard assets/stls/*.stl)
-assets_xyzuv = $(wildcard assets/xyzuv/*.xyzuv)
-assets_fonts = $(wildcard assets/fonts/*.ttf)
+assets_generic = $(wildcard assets/valve/**.*)
+assets_conv = $(addprefix filesystem/valve/,$(notdir $(assets_generic)))
 
-assets_conv = $(addprefix filesystem/textures/,$(notdir $(assets_png:%.png=%.sprite))) \
+filesystem/valve/%: assets/valve/%
+	@mkdir -p $(dir $@)
+	@echo "    [GENERIC] $@"
+	cp "$<" $@
+
+#assets_png = $(wildcard assets/textures/*.png)
+#assets_wav = $(wildcard assets/audios/*.wav)
+#assets_stl = $(wildcard assets/stls/*.stl)
+#assets_xyzuv = $(wildcard assets/xyzuv/*.xyzuv)
+#assets_fonts = $(wildcard assets/fonts/*.ttf)
+
+#assets_conv = $(addprefix filesystem/textures/,$(notdir $(assets_png:%.png=%.sprite))) \
 			  $(addprefix filesystem/audios/,$(notdir $(assets_wav:%.wav=%.wav64))) \
 			  $(addprefix filesystem/stls/,$(notdir $(assets_stl:%.stl=%.stl))) \
 			  $(addprefix filesystem/xyzuv/,$(notdir $(assets_xyzuv:%.xyzuv=%.xyzuv))) \
@@ -75,6 +85,7 @@ $(BUILD_DIR)/Xash64.elf: $(SRCS:%.c=$(BUILD_DIR)/%.o) $(MAIN_ELF_EXTERNS)
 $(MAIN_ELF_EXTERNS): $(DSO_LIST)
 
 filesystem/filesystem_stdio.dso: $(filesystem_SRC:%.c=$(BUILD_DIR)/%.o)
+filesystem/hl_mips_n64.dso: $(hldll_SRC:%.cpp=$(BUILD_DIR)/%.o)
 $(BUILD_DIR)/Xash64.msym: $(BUILD_DIR)/Xash64.elf
 
 Xash64.z64: N64_ROM_TITLE="Xash 64 Build"

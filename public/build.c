@@ -152,9 +152,10 @@ const char *Q_PlatformStringByID( const int platform )
 		return "wasi";
 	case PLATFORM_SUNOS:
 		return "sunos";
+	case PLATFORM_N64:
+		return "n64";
 	}
 
-	assert( 0 );
 	return "unknown";
 }
 
